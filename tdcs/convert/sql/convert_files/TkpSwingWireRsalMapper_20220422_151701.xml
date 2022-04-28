@@ -1,0 +1,802 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+    <!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    <mapper namespace="com.skt.tdcs.batch.tkp.uki.mapper.TkpSwingWireRsalMapper">
+	<select id="getAgencyList" parameterType="hashmap" >
+		<![CDATA[		SELECT /* TKPUKI08700_getAgencyList_소속대리점 목록 */
+            DISTINCT AGENCY_CD
+      FROM (SELECT UKEY_AGENCY_CD	/* UKEY대리점코드 */	
+              FROM TBAS_AGENCY_MAPP
+             WHERE DEL_YN	/* 삭제여부 */	      = 'N'
+            UNION ALL
+            SELECT UKEY_AGENCY_CD	/* UKEY대리점코드 */	 AGENCY_CD
+              FROM TBAS_DEAL_CO_MGMT
+             WHERE DEALCO_CL_CD1	/* 거래처구분코드1 */	 = 'A1'
+               AND DEL_YN	/* 삭제여부 */	      = 'N')		]]>
+	</select>
+	<select id="getCancelCheck" parameterType="hashmap" >
+		<![CDATA[		SELECT /*+ INDEX_DESC(XTKP_BLINE_IF_01) */
+	           UKEY_AGENCY_CD
+	         , UKEY_SUB_CD
+	         , UKEY_CHANNEL_CD
+	      FROM TTKP_BLINE_IF
+	     WHERE SKB_SVC_MGMT_NUM = #{SKB_SVC_MGMT_NUM}
+	       AND PROC_TYP    = '4'
+	 LIMIT 1		]]>
+	</select>
+	<select id="getAgencyMapp" parameterType="hashmap" >
+		<![CDATA[		SELECT  /* TKPUKI08700_getAgencyMapp_대리점Mappaing_유선_김연석_김연석 */
+           MAPP_AGENCY_CD	/* 매핑대리점코드 */	
+         , COMPANY_CL_CD	/* 회사구분코드 */	
+      FROM TBAS_AGENCY_MAPP
+     WHERE UKEY_AGENCY_CD	/* UKEY대리점코드 */	  = #{AGENCY_CD}
+       AND DEL_YN	/* 삭제여부 */	 = 'N'		]]>
+	</select>
+	<select id="getUserMapp" parameterType="hashmap" >
+		<![CDATA[		SELECT  /* TKPUKI08700_getUserMapp_사용자Mappaing_유선_김연석_김연석 */
+           MAPP_LOGIN_ID	/* 매핑로그인ID */	
+         , COMPANY_CL_CD	/* 회사구분코드 */	
+      FROM TBAS_USER_MAPP
+     WHERE LOGIN_USER_ID	/* 로그인사용자ID */	 = #{LOGIN_ID}
+       AND DEL_YN	/* 삭제여부 */	 = 'N'		]]>
+	</select>
+	<select id="getUserIdExist" parameterType="hashmap" >
+		<![CDATA[		SELECT  /* TKPUKI08700_getUserIdExist_처리자 정보 취득_유선_김연석_김연석 */
+           COUNT(USER_ID	/* 사용자ID */	) EXST_CNT
+      FROM TBAS_USER_MGMT
+     WHERE UKEY_ID	/* UKEY_ID */	  = #{U_KEY_ID}
+       AND EFF_USER_YN	/* 유효사용자여부 */	 = 'Y'
+       AND DEL_YN	/* 삭제여부 */	 = 'N'		]]>
+	</select>
+	<select id="getUserInfo" parameterType="hashmap" >
+		<![CDATA[		SELECT  /* TKPUKI08700_getUserIdExist_처리자 정보 취득_유선_김연석_김연석 */
+           USER_ID	/* 사용자ID */	
+      FROM TBAS_USER_MGMT
+     WHERE UKEY_ID	/* UKEY_ID */	  = #{U_KEY_ID}
+       AND EFF_USER_YN	/* 유효사용자여부 */	 = 'Y'
+       AND DEL_YN	/* 삭제여부 */	 = 'N'		]]>
+	</select>
+	<select id="getSuplExist" parameterType="hashmap" >
+		<![CDATA[		SELECT  /* TKPUKI08700_getSuplExist_상품/부가서비스/할인 정보 취득_유선_김연석_김연석 */
+           count(SUPL_SVC_CD	/* 부가서비스코드 */	) EXST_CNT
+      FROM TBAS_SUPL_TKP_MGMT
+     WHERE SUPL_SVC_CD	/* 부가서비스코드 */	 = #{SUPL_SVC}
+       AND WIRE_CL_CD	/* 유무선구분코드 */	     = #{WIRE_CL}
+       AND DEL_YN	/* 삭제여부 */	      = 'N'		]]>
+	</select>
+	<select id="getSuplSvcExist" parameterType="hashmap" >
+		<![CDATA[		SELECT  /* TKPUKI08700_getSuplExist_상품/부가서비스/할인 정보 취득_유선_김연석_김연석 */
+           count(SUPL_SVC_CD	/* 부가서비스코드 */	) EXST_CNT
+      FROM TBAS_SUPL_SVC_MGMT
+     WHERE SUPL_SVC_CD	/* 부가서비스코드 */	 = #{SUPL_SVC}
+       AND WIRE_CL_CD	/* 유무선구분코드 */	     = #{WIRE_CL}
+       AND DEL_YN	/* 삭제여부 */	      = 'N'		]]>
+	</select>
+	<select id="getCommCdExist" parameterType="hashmap" >
+		<![CDATA[		SELECT  /* TKPUKI08700_getCommCdExist_코드존재유무파악_김연석_김연석 */
+          count(COMM_CD_VAL	/* 공통코드값 */	) EXST_CNT
+    FROM  tbas_comm_cd_dtl
+    WHERE COMM_CD_ID	/* 공통코드ID */	  = #{COMM_CD_ID}
+      AND COMM_CD_VAL	/* 공통코드값 */	 = #{COMM_CD_VAL}
+      AND DEL_YN	/* 삭제여부 */	 = 'N'		]]>
+	</select>
+	<select id="getModelCdExist" parameterType="hashmap" >
+		<![CDATA[		SELECT /* TKPUKI08700_getModelCdExist_코드존재유무파악_김연석_김연석 */
+           count(PROD_CD	/* 상품코드 */	) EXST_CNT
+      FROM tbas_prod_mgmt
+     WHERE PROD_CD	/* 상품코드 */	  = #{EQP_MDL}
+       AND DEL_YN	/* 삭제여부 */	 = 'N'		]]>
+	</select>
+	<select id="getSaleChannel" parameterType="hashmap" >
+		<![CDATA[		SELECT /* TKPUKI08700_getSaleChannel_판매채널 Check_김연석_김연석 */
+           NVL(FTKP_GET_SALE_CHNL(#{CHNL_CD}), 'N') SALE_CHNL
+      FROM DUAL		]]>
+	</select>
+	<select id="getBLineIFNone" parameterType="hashmap" >
+		<![CDATA[		SELECT  /* TKPUKI08700_getBLineIFNone_유선상품 미처리 정보 취득_유선_김연석_김연석 */
+             PROC_DT
+         ,   FBAS_GET_COMMCDNM_VAL('ZTKP_C_00080', PROC_TYP) PROC_TYP_NM
+      FROM   TTKP_BLINE_IF
+     WHERE   SKB_SVC_MGMT_NUM  = #{SKB_SVC_MGMT_NUM}
+       AND   ps_apnd_yn        = 'N'
+       AND ((op_dt             < #{OP_DT})                       or
+            (op_dt             = #{OP_DT} and op_tm  < #{OP_TM} ) or
+            (op_dt             = #{OP_DT} and op_tm  = #{OP_TM}  and seq    < #{SEQ}  ) )
+    LIMIT 1		]]>
+	</select>
+	<select id="getGeneralSaleInfo" parameterType="hashmap" >
+		<![CDATA[		SELECT SUBSTR(A.SVC_DTM, 1, 8)    SVC_DT
+         , C.UKEY_AGENCY_CD	/* UKEY대리점코드 */	
+         , IFNULL(C.UKEY_SUB_CD	/* UKEY서브점코드 */	, '0000') UKEY_SUB_CD	/* UKEY서브점코드 */	
+         , C.SKT_CHNL_CD	/* UKEY채널코드 */	
+         , C.DEALCO_CD	/* 거래처코드 */	               SALE_PLC
+         , A.SVC_PLC
+         , A.SVC_NUM
+         , A.SALE_CHGRG_ID
+         , ( SELECT CASE WHEN SUBSTR(A.SVC_DTM, 1, 6) = SUBSTR(#{PROC_DT}, 1, 6) THEN
+                              CASE SUBSTR(A.SALE_DTL_TYP, 1, 2)  WHEN 'S1' THEN  '01'  WHEN 'S2' THEN  '02'  ELSE '03' END
+                         ELSE  '03'
+                    END CASE
+               FROM DUAL )              CELL_SCRB_TYP
+      FROM TSAL_GENERAL_SALE   A
+         , TSAL_EQUIPMENT_SALE B
+         , TBAS_DEAL_CO_MGMT   C
+     WHERE A.GNRL_SALE_NO      = B.GNRL_SALE_NO
+       AND A.GNRL_SALE_CHG_SEQ = B.GNRL_SALE_CHG_SEQ
+       AND A.SALE_PLC          = C.DEALCO_CD	/* 거래처코드 */	
+       AND A.SALE_DTM    BETWEEN C.EFF_STA_DTM	/* 유효시작일시 */	 AND C.EFF_END_DTM	/* 유효종료일시 */	
+       AND A.SVC_MGMT_NUM      = #{SVC_MGMT_NUM}
+       AND B.EQP_MDL_CD        = #{EQP_MDL_CD}
+       AND B.EQP_SER_NUM       = #{EQP_SER_NUM}
+    LIMIT 1  /* 판매변경이력으로 여러건이 조회되는 것을 방지 */		]]>
+	</select>
+	<select id="getDealMapping" parameterType="hashmap" >
+		<![CDATA[		SELECT  /* TKPUKI08700_getDealMapping_DCODE통합매핑_김도엽 */
+        FBAS_GET_DEAL_MAPPING('A', #{UKEY_AGENCY_CD}, #{UKEY_SUB_CD}) as DEAL_MAP_INFO
+      FROM  dual		]]>
+	</select>
+	<select id="getBLineInfo" parameterType="hashmap" >
+		<![CDATA[		SELECT  /* TKPUKI08700_getBLineInfo_유선상품 처리상태 정보 취득_유선_김연석_김연석 */
+           SKB_SALE_NO, SKB_SALE_CHG_SEQ
+         , PROC_STAT, FBAS_GET_COMMCDNM_VAL('ZTKP_C_00080', PROC_STAT) PROC_NM
+         , ACPT_DT, ACPT_PLC, ACPT_CHRGR_ID
+         , ACPT_CNCL_DT, ACPT_CNCL_PLC, ACPT_CNCL_CHRGR_ID
+         , SVC_DT, SVC_PLC, SVC_CHRGR_ID
+         , TERM_DT, TERM_PLC, TERM_CHRGR_ID
+         , STOP_DT, STOP_PLC, STOP_CHRGR_ID
+         , STOP_CNCL_DT, STOP_CNCL_PLC, STOP_CNCL_CHRGR_ID
+         , RMKS
+      FROM TTKP_BLINE_MGMT
+     WHERE SKB_SVC_MGMT_NUM  = #{SKB_SVC_MGMT_NUM}
+       AND del_yn = 'N'		]]>
+	</select>
+	<select id="getBlineMgmtSeq" parameterType="hashmap" >
+		<![CDATA[		SELECT /*+ TKPUKI08700_getBlineMgmtSeqAB_김연석 */
+           CASE  WHEN #{SL_CL} = '01' THEN 'RB' || LPAD(TTKP_RB_SEQ.NEXTVAL, 9, '0')
+                 WHEN #{SL_CL} = '02' THEN 'AB' || LPAD(TTKP_AB_SEQ.NEXTVAL, 9, '0')
+                 WHEN #{SL_CL} = '03' THEN 'OB' || LPAD(TTKP_OB_SEQ.NEXTVAL, 9, '0')
+                 WHEN #{SL_CL} = '04' THEN 'SB' || LPAD(TTKP_SB_SEQ.NEXTVAL, 9, '0')
+                 ELSE                     'MB' || LPAD(TTKP_MB_SEQ.NEXTVAL, 9, '0')
+           END   SALE_NO
+       FROM DUAL		]]>
+	</select>
+	<select id="call_SP_TKPDEALINFO" parameterType="hashmap" >
+		<![CDATA[		CALL SP_TKPDEALINFO /*+ call_SP_TKPDEALINFO_김연석_김연석 */
+		    ( #{ov_ErrorCl, jdbcType=VARCHAR, mode=OUT}
+		    , #{ov_ErrorMsg, jdbcType=VARCHAR, mode=OUT}
+		    , #{ov_SalePLC, jdbcType=VARCHAR, mode=OUT}
+		    , #{ov_StlPLC, jdbcType=VARCHAR, mode=OUT}
+		    , #{ov_DisPLC, jdbcType=VARCHAR, mode=OUT}
+		    , #{ov_DealCl1, jdbcType=VARCHAR, mode=OUT}
+		    , #{ov_DealCl2, jdbcType=VARCHAR, mode=OUT}
+		    , #{ov_SaleStopYN, jdbcType=VARCHAR, mode=OUT}
+		    , #{ov_PayStopYn, jdbcType=VARCHAR, mode=OUT}
+		    , #{ov_SlCl, jdbcType=VARCHAR, mode=OUT}
+		    , #{ov_SlNetCd, jdbcType=VARCHAR, mode=OUT}
+		    , #{ov_CompanyCl, jdbcType=VARCHAR, mode=OUT}
+		    , #{iv_SaleDtm, jdbcType=VARCHAR, mode=IN}
+		    , #{iv_ProcDtm, jdbcType=VARCHAR, mode=IN}
+		    , #{iv_AgencyCd, jdbcType=VARCHAR, mode=IN}
+		    , #{iv_SubCd, jdbcType=VARCHAR, mode=IN}
+		    , #{iv_ChannelCd, jdbcType=VARCHAR, mode=IN} )		]]>
+	</select>
+	<insert id="addSvcTypLst" parameterType="hashmap" >
+		<![CDATA[		INSERT /*+ TKPUKI08700_addSvcTypLst_유선고객 서비스유형 저장_김연석_김연석 */
+            INTO TTKP_SVCTYP_LST (
+                        PACKAGE_NO
+                      , SKB_SALE_NO
+                      , PROC_SEQ
+                      , SKB_SVC_MGMT_NUM
+                      , PROD_CL
+                      , CUST_CL
+                      , CUST_NM
+                      , CELL_SVC_NUM
+                      , SKB_SVC_NUM
+                      , EQP_MDL_CD
+                      , CELL_PHONE_TYP
+                      , CELL_SVC_PLC
+                      , CELL_PHONE_SVC_DT
+                      , PROC_STAT
+                      , PROC_DT
+                      , PROC_PLC
+                      , CUST_NO
+                      , USCAN_ACPT_DTM
+                      , DEL_YN
+                      , UPD_CNT
+                      , INS_USER_ID
+                      , INS_DTM
+                      , MOD_USER_ID
+                      , MOD_DTM)
+                 SELECT PACKAGE_NO
+                      , SKB_SALE_NO
+                      , (SELECT IFNULL(MAX(PROC_SEQ), 0) + 1 FROM TTKP_SVCTYP_LST
+                          WHERE PACKAGE_NO  = #{PACKAGE_NO}
+                            AND SKB_SALE_NO = #{SKB_SALE_NO} ) PROC_SEQ
+                      , SKB_SVC_MGMT_NUM
+                      , PROD_CL
+                      , CUST_CL
+                      , CUST_NM
+                      , CELL_SVC_NUM
+                      , SKB_SVC_NUM
+                      , EQP_MDL_CD
+                      , CELL_PHONE_TYP
+                      , CELL_SVC_PLC
+                      , CELL_PHONE_SVC_DT
+                      , PROC_STAT
+                      , PROC_DT
+                      , PROC_PLC
+                      , CUST_NO
+                      , USCAN_ACPT_DTM
+                      , 'N'
+                      , 0
+                      , #onlineContext.userInfo.loginId#
+                      , DATE_FORMAT(sysdate(), '%Y%m%d%H%i%s')
+                      , #onlineContext.userInfo.loginId#
+                      , DATE_FORMAT(sysdate(), '%Y%m%d%H%i%s' )
+                   FROM TTKP_BLINE_MGMT A
+                  WHERE SKB_SALE_NO      = #{SKB_SALE_NO}
+                    AND SKB_SALE_CHG_SEQ = #{SKB_SALE_CHG_SEQ}		]]>
+	</insert>
+	<insert id="addBlineIf" parameterType="hashmap" >
+		<![CDATA[		INSERT /*+ TKPUKI08700_addBlineIf_유선상품 I/F 자료 저장_김연석_김연석 */
+           INTO TTKP_BLINE_IF (
+            op_dt
+          , op_tm
+          , seq
+          , if_rec_typ
+          , ukey_agency_cd
+          , ukey_sub_cd
+          , prod_cl
+          , prod_id
+          , CELL_SVC_MGMT_NUM
+          , SKB_SVC_MGMT_NUM
+          , package_no
+          , cust_cl
+          , cust_nm
+          , cust_biz_num
+          , CELL_SVC_NUM
+          , cust_tel_no
+          , zip_cd
+          , base_addr
+          , dtl_addr
+          , bill_cl
+          , bank_cd
+          , bank_cl
+          , bank_acc_no
+          , cell_phone_typ
+          , cell_phone_svc_dt
+          , cell_agency_cd
+          , cell_sub_cd
+          , cell_channel_cd
+          , proc_user_id
+          , ukey_channel_cd
+          , ukey_channel_sub_cd
+          , sale_user_id
+          , agrmt_prd_cd
+          , set_prd_cd
+          , ent_fee_typ
+          , ent_fee
+          , mnp_cl
+          , bf_comm_nm
+          , bf_svc_num
+          , tel_sev
+          , tel_sev_nm
+          , proc_typ
+          , proc_dt
+          , fst_acpt_dt
+          , gift_cd
+          , gift_nm
+          , disc_svc_cd1
+          , disc_svc_cd2
+          , disc_svc_cd3
+          , disc_svc_cd4
+          , disc_svc_cd5
+          , disc_svc_cd6
+          , disc_svc_cd7
+          , disc_svc_cd8
+          , disc_svc_cd9
+          , disc_svc_cd10
+          , cell_scrb_typ
+          , eqp_mdl_cd
+          , eqp_ser_num
+          , skt_proc_user_id
+          , tb_family_cd
+          , tb_svc_line_cnt
+          , svc_stop_sta_dt
+          , stop_rsn_nm
+          , tech_cl
+          , tech_cl_nm
+          , sl_cl
+          , svc_plc
+          , cell_plc
+          , cell_sale_plc
+          , proc_chrgr_id
+          , proc_plc
+          , sale_chrgr_id
+          , skt_proc_chrgr_id
+          , sl_net_cd
+          , company_cl
+          , org_ukey_agency_cd
+          , ps_apnd_yn
+          , error_cl
+          , rmks
+          , cust_no
+          , uscan_acpt_dtm
+          , del_yn
+          , upd_cnt
+          , ins_user_id
+          , ins_dtm
+          , mod_user_id
+          , mod_dtm
+
+          )
+          VALUES (
+            #{OP_DT}
+          , #{OP_TM}
+          , #{SEQ}
+          , #{IF_REC_TYP}
+          , #{UKEY_AGENCY_CD}
+          , #{UKEY_SUB_CD}
+          , #{PROD_CL}
+          , #{PROD_ID}
+          , #{CELL_SVC_MGMT_NUM}
+          , #{SKB_SVC_MGMT_NUM}
+          , #{PACKAGE_NO}
+          , #{CUST_CL}
+          , #{CUST_NM}
+          , XX1.ENC_VARCHAR2_INS(#{CUST_BIZ_NUM}, 10, 'PSKEY')
+          , #{CELL_SVC_NUM}
+          , #{CUST_TEL_NO}
+          , #{ZIP_CD}
+          , #{BASE_ADDR}
+          , #{DTL_ADDR}
+          , #{BILL_CL}
+          , #{BANK_CD}
+          , #{BANK_CL}
+          , #{BANK_ACC_NO}
+          , #{CELL_PHONE_TYP}
+          , #{CELL_PHONE_SVC_DT}
+          , #{CELL_AGENCY_CD}
+          , #{CELL_SUB_CD}
+          , #{CELL_CHANNEL_CD}
+          , #{PROC_USER_ID}
+          , #{UKEY_CHANNEL_CD}
+          , #{UKEY_CHANNEL_SUB_CD}
+          , #{SALE_USER_ID}
+          , #{AGRMT_PRD_CD}
+          , #{SET_PRD_CD}
+          , #{ENT_FEE_TYP}
+          , #{ENT_FEE}
+          , #{MNP_CL}
+          , #{BF_COMM_NM}
+          , #{BF_SVC_NUM}
+          , #{TEL_SEV}
+          , #{TEL_SEV_NM}
+          , #{PROC_TYP}
+          , #{PROC_DT}
+          , #{FST_ACPT_DT}
+          , #{GIFT_CD}
+          , #{GIFT_NM}
+          , #{DISC_SVC_CD1}
+          , #{DISC_SVC_CD2}
+          , #{DISC_SVC_CD3}
+          , #{DISC_SVC_CD4}
+          , #{DISC_SVC_CD5}
+          , #{DISC_SVC_CD6}
+          , #{DISC_SVC_CD7}
+          , #{DISC_SVC_CD8}
+          , #{DISC_SVC_CD9}
+          , #{DISC_SVC_CD10}
+          , #{CELL_SCRB_TYP}
+          , #{EQP_MDL_CD}
+          , #{EQP_SER_NUM}
+          , #{SKT_PROC_USER_ID}
+          , #{TB_FAMILY_CD}
+          , #{TB_SVC_LINE_CNT}
+          , #{SVC_STOP_STA_DT}
+          , #{STOP_RSN_NM}
+          , #{TECH_CL}
+          , #{TECH_CL_NM}
+          , #{SL_CL}
+          , #{SVC_PLC}
+          , #{CELL_PLC}
+          , #{CELL_SALE_PLC}
+          , #{PROC_CHRGR_ID}
+          , #{PROC_PLC}
+          , #{SALE_CHRGR_ID}
+          , #{SKT_PROC_CHRGR_ID}
+          , #{SL_NET_CD}
+          , #{COMPANY_CL}
+          , #{ORG_UKEY_AGENCY_CD}
+          , #{PS_APND_YN}
+          , #{ERROR_CL}
+          , #{RMKS}
+          , #{CUST_NO}
+          , #{USCAN_ACPT_DTM}
+          , 'N'
+          , 1
+          , 'TkpSwingWireRsal'
+          , DATE_FORMAT(sysdate(), '%Y%m%d%H%i%s')
+          , 'TkpSwingWireRsal'
+          , DATE_FORMAT(sysdate(), '%Y%m%d%H%i%s' )
+          )		]]>
+	</insert>
+	<insert id="addBlineSuplIf" parameterType="hashmap" >
+		<![CDATA[		INSERT /*+ TKPUKI08700_addBlineSuplIf_유선상품 I/F 자료 저장_김연석_김연석 */
+            INTO TTKP_BLINE_SUPL_IF (
+            op_dt
+          , op_tm
+          , seq
+          , supl_svc_cd
+          , del_yn
+          , upd_cnt
+          , ins_user_id
+          , ins_dtm
+          , mod_user_id
+          , mod_dtm           )
+          VALUES (
+            #{OP_DT}
+          , #{OP_TM}
+          , #{SEQ}
+          , #{SUPL_SVC_CD}
+          , 'N'
+          , 1
+          , 'TkpSwingWireRsal'
+          , DATE_FORMAT(sysdate(), '%Y%m%d%H%i%s')
+          , 'TkpSwingWireRsal'
+          , DATE_FORMAT(sysdate(), '%Y%m%d%H%i%s' ))		]]>
+	</insert>
+	<insert id="addBlineMgmt" parameterType="hashmap" >
+		<![CDATA[		INSERT /*+ TKPUKI08700_addBlineMgmt_유선상품 판매원장 생성_김연석_김연석 */
+     INTO  TTKP_BLINE_MGMT (
+           skb_sale_no
+         , skb_sale_chg_seq
+         , prod_cl
+         , prod_id
+         , CELL_SVC_MGMT_NUM
+         , SKB_SVC_MGMT_NUM
+         , package_no
+         , cust_cl
+         , cust_nm
+         , cust_biz_num
+         , CELL_SVC_NUM
+         , cust_tel_no
+         , zip_cd
+         , base_addr
+         , dtl_addr
+         , bill_cl
+         , bank_cd
+         , bank_cl
+         , bank_acc_no
+         , cell_phone_typ
+         , cell_phone_svc_dt
+         , cell_svc_plc
+         , cell_sale_plc
+         , proc_chrgr_id
+         , sale_chrgr_id
+         , supl_chrgr_id
+         , agrmt_prd_cd
+         , set_prd_cd
+         , ent_fee_typ
+         , ent_fee
+         , mnp_cl
+         , bf_comm_nm
+         , bf_svc_num
+         , tel_sev
+         , tel_sev_nm
+         , proc_typ
+         , proc_dt
+         , fst_acpt_dt
+         , gift_cd
+         , gift_nm
+         , disc_svc_cd1
+         , disc_svc_cd2
+         , disc_svc_cd3
+         , disc_svc_cd4
+         , disc_svc_cd5
+         , disc_svc_cd6
+         , disc_svc_cd7
+         , disc_svc_cd8
+         , disc_svc_cd9
+         , disc_svc_cd10
+         , cell_scrb_typ
+         , eqp_mdl_cd
+         , eqp_ser_num
+         , skt_proc_chrgr_id
+         , tb_family_cd
+         , tb_svc_line_cnt
+         , stop_rsn_nm
+         , tech_cl
+         , sl_cl
+         , sl_net_cd
+         , company_cl
+         , proc_stat
+         , proc_plc
+         , stl_plc
+         , acpt_dt
+         , acpt_plc
+         , acpt_chrgr_id
+         , acpt_cncl_dt
+         , acpt_cncl_plc
+         , acpt_cncl_chrgr_id
+         , svc_dt
+         , svc_plc
+         , svc_chrgr_id
+         , term_dt
+         , term_plc
+         , term_chrgr_id
+         , stop_dt
+         , stop_plc
+         , stop_chrgr_id
+         , stop_cncl_dt
+         , stop_cncl_plc
+         , stop_cncl_chrgr_id
+         , rmks
+         , cust_no
+         , uscan_acpt_dtm
+         , del_yn
+         , upd_cnt
+         , ins_user_id
+         , ins_dtm
+         , mod_user_id
+         , mod_dtm
+           )
+    VALUES (
+           #{SKB_SALE_NO}
+         , #{SKB_SALE_CHG_SEQ}
+         , #{PROD_CL}
+         , #{PROD_ID}
+         , #{CELL_SVC_MGMT_NUM}
+         , #{SKB_SVC_MGMT_NUM}
+         , #{PACKAGE_NO}
+         , #{CUST_CL}
+         , #{CUST_NM}
+         , XX1.ENC_VARCHAR2_INS(#{CUST_BIZ_NUM}, 10, 'PSKEY')
+         , #{CELL_SVC_NUM}
+         , #{CUST_TEL_NO}
+         , #{ZIP_CD}
+         , #{BASE_ADDR}
+         , #{DTL_ADDR}
+         , #{BILL_CL}
+         , #{BANK_CD}
+         , #{BANK_CL}
+         , #{BANK_ACC_NO}
+         , #{CELL_PHONE_TYP}
+         , #{CELL_PHONE_SVC_DT}
+         , #{CELL_PLC}
+         , #{CELL_SALE_PLC}
+         , #{PROC_CHRGR_ID}
+         , #{SALE_CHRGR_ID}
+         , #{SALE_CHRGR_ID}
+         , #{AGRMT_PRD_CD}
+         , #{SET_PRD_CD}
+         , #{ENT_FEE_TYP}
+         , #{ENT_FEE}
+         , #{MNP_CL}
+         , #{BF_COMM_NM}
+         , #{BF_SVC_NUM}
+         , #{TEL_SEV}
+         , #{TEL_SEV_NM}
+         , #{PROC_TYP}
+         , #{PROC_DT}
+         , #{FST_ACPT_DT}
+         , #{GIFT_CD}
+         , #{GIFT_NM}
+         , #{DISC_SVC_CD1}
+         , #{DISC_SVC_CD2}
+         , #{DISC_SVC_CD3}
+         , #{DISC_SVC_CD4}
+         , #{DISC_SVC_CD5}
+         , #{DISC_SVC_CD6}
+         , #{DISC_SVC_CD7}
+         , #{DISC_SVC_CD8}
+         , #{DISC_SVC_CD9}
+         , #{DISC_SVC_CD10}
+         , #{CELL_SCRB_TYP}
+         , #{EQP_MDL_CD}
+         , #{EQP_SER_NUM}
+         , #{SKT_PROC_CHRGR_ID}
+         , #{TB_FAMILY_CD}
+         , #{TB_SVC_LINE_CNT}
+         , #{STOP_RSN_NM}
+         , #{TECH_CL}
+         , #{SL_CL}
+         , #{SL_NET_CD}
+         , #{COMPANY_CL}
+         , #{PROC_STAT}
+         , #{PROC_PLC}
+         , #{STL_PLC}
+         , #{ACPT_DT}
+         , #{ACPT_PLC}
+         , #{ACPT_USER_ID}
+         , #{ACPT_CNCL_DT}
+         , #{ACPT_CNCL_PLC}
+         , #{ACPT_CNCL_USER_ID}
+         , #{SVC_DT}
+         , #{SVC_PLC}
+         , #{SVC_USER_ID}
+         , #{TERM_DT}
+         , #{TERM_PLC}
+         , #{TERM_USER_ID}
+         , #{STOP_DT}
+         , #{STOP_PLC}
+         , #{STOP_USER_ID}
+         , #{STOP_CNCL_DT}
+         , #{STOP_CNCL_PLC}
+         , #{STOP_CNCL_USER_ID}
+         , #{RMKS}
+         , #{CUST_NO}
+         , #{USCAN_ACPT_DTM}
+         , 'N'
+         ,  1
+         , 'TkpSwingWireRsal'
+         ,  DATE_FORMAT(sysdate(), '%Y%m%d%H%i%s')
+         , 'TkpSwingWireRsal'
+         ,  DATE_FORMAT(sysdate(), '%Y%m%d%H%i%s')
+         )		]]>
+	</insert>
+	<insert id="addBlineSupl" parameterType="hashmap" >
+		<![CDATA[		INSERT /*+ TKPUKI08700_addBlineSupl_유선상품부가서비스 I/F 자료 저장_김연석_김연석 */
+           INTO TTKP_BLINE_SUPL (
+                SKB_SALE_NO
+             ,  SKB_SALE_CHG_SEQ
+             ,  SUPL_SEQ
+             ,  SUPL_SVC_CD
+             ,  PR_MNY_YN
+             ,  DEL_YN
+             ,  UPD_CNT
+             ,  INS_USER_ID
+             ,  INS_DTM
+             ,  MOD_USER_ID
+             ,  MOD_DTM)
+         VALUES (
+                #{SKB_SALE_NO}
+             ,  #{SKB_SALE_CHG_SEQ}
+             ,  #{SUPL_SEQ}
+             ,  #{SUPL_SVC_CD}
+             , 'N'
+             , 'N'
+             ,  1
+             , 'TkpSwingWireRsal'
+             ,  DATE_FORMAT(sysdate(), '%Y%m%d%H%i%s')
+             , 'TkpSwingWireRsal'
+             ,  DATE_FORMAT(sysdate(), '%Y%m%d%H%i%s' ))		]]>
+	</insert>
+	<update id="saveBlineIf" parameterType="hashmap" >
+		<![CDATA[		UPDATE /*+ TKPUKI08700_saveBlineIf_오류 메시지 처리 */
+           TTKP_BLINE_IF
+       SET ps_apnd_yn = 'N'
+         , rmks       = #{RMKS}
+         , error_cl   = 'E2'
+     WHERE op_dt      = #{OP_DT}
+       AND op_tm      = #{OP_TM}
+       AND seq        = #{SEQ}		]]>
+	</update>
+	<update id="saveBlineIfPSApnd" parameterType="hashmap" >
+		<![CDATA[		UPDATE /*+ TKPUKI08700_saveBlineIfPSApnd_APPEND */
+           TTKP_BLINE_IF
+       SET ps_apnd_yn = 'Y'
+     WHERE op_dt      = #{OP_DT}
+       AND op_tm      = #{OP_TM}
+       AND seq        = #{SEQ}		]]>
+	</update>
+	<update id="saveBLineMgmt" parameterType="hashmap" >
+		<![CDATA[		UPDATE /*+ TKPUKI08700_saveBLineMgmt_유선상품 판매원장 수정_김연석_김연석 */
+           TTKP_BLINE_MGMT
+       SET prod_cl           = #{PROD_CL}
+         , prod_id           = #{PROD_ID}
+         , CELL_SVC_MGMT_NUM = #{CELL_SVC_MGMT_NUM}
+         , SKB_SVC_MGMT_NUM  = #{SKB_SVC_MGMT_NUM}
+         , package_no        = #{PACKAGE_NO}
+         , cust_cl           = #{CUST_CL}
+         , cust_nm           = #{CUST_NM}
+         , cust_biz_num      = XX1.ENC_VARCHAR2_INS(#{CUST_BIZ_NUM}, 10, 'PSKEY')
+         , CELL_SVC_NUM      = #{CELL_SVC_NUM}
+         , cust_tel_no       = #{CUST_TEL_NO}
+         , zip_cd            = #{ZIP_CD}
+         , base_addr         = #{BASE_ADDR}
+         , dtl_addr          = #{DTL_ADDR}
+         , bill_cl           = #{BILL_CL}
+         , bank_cd           = #{BANK_CD}
+         , bank_cl           = #{BANK_CL}
+         , bank_acc_no       = #{BANK_ACC_NO}
+         , cell_phone_typ    = #{CELL_PHONE_TYP}
+         , cell_phone_svc_dt = #{CELL_PHONE_SVC_DT}
+         , cell_svc_plc      = #{CELL_PLC}
+         , proc_chrgr_id     = #{PROC_CHRGR_ID}
+         , sale_chrgr_id     = #{SALE_CHRGR_ID}
+         , supl_chrgr_id     = #{SALE_CHRGR_ID}
+         , agrmt_prd_cd      = #{AGRMT_PRD_CD}
+         , set_prd_cd        = #{SET_PRD_CD}
+         , ent_fee_typ       = #{ENT_FEE_TYP}
+         , ent_fee           = #{ENT_FEE}
+         , mnp_cl            = #{MNP_CL}
+         , bf_comm_nm        = #{BF_COMM_NM}
+         , bf_svc_num        = #{BF_SVC_NUM}
+         , tel_sev           = #{TEL_SEV}
+         , tel_sev_nm        = #{TEL_SEV_NM}
+         , proc_typ          = #{PROC_TYP}
+         , proc_dt           = #{PROC_DT}
+         , fst_acpt_dt       = #{FST_ACPT_DT}
+         , gift_cd           = #{GIFT_CD}
+         , gift_nm           = #{GIFT_NM}
+         , disc_svc_cd1      = #{DISC_SVC_CD1}
+         , disc_svc_cd2      = #{DISC_SVC_CD2}
+         , disc_svc_cd3      = #{DISC_SVC_CD3}
+         , disc_svc_cd4      = #{DISC_SVC_CD4}
+         , disc_svc_cd5      = #{DISC_SVC_CD5}
+         , disc_svc_cd6      = #{DISC_SVC_CD6}
+         , disc_svc_cd7      = #{DISC_SVC_CD7}
+         , disc_svc_cd8      = #{DISC_SVC_CD8}
+         , disc_svc_cd9      = #{DISC_SVC_CD9}
+         , disc_svc_cd10     = #{DISC_SVC_CD10}
+         , cell_scrb_typ     = #{CELL_SCRB_TYP}
+         , eqp_mdl_cd        = #{EQP_MDL_CD}
+         , eqp_ser_num       = #{EQP_SER_NUM}
+         , skt_proc_chrgr_id = #{SKT_PROC_CHRGR_ID}
+         , tb_family_cd      = #{TB_FAMILY_CD}
+         , tb_svc_line_cnt   = #{TB_SVC_LINE_CNT}
+         , stop_rsn_nm       = #{STOP_RSN_NM}
+         , tech_cl           = #{TECH_CL}
+         , sl_cl             = #{SL_CL}
+         , sl_net_cd         = #{SL_NET_CD}
+         , company_cl        = #{COMPANY_CL}
+         , proc_stat         = #{PROC_STAT}
+         , proc_plc          = #{PROC_PLC}
+         , stl_plc           = #{STL_PLC}
+         , acpt_dt           = #{ACPT_DT}
+         , acpt_plc          = #{ACPT_PLC}
+         , acpt_chrgr_id      = #{ACPT_USER_ID}
+         , acpt_cncl_dt      = #{ACPT_CNCL_DT}
+         , acpt_cncl_plc     = #{ACPT_CNCL_PLC}
+         , acpt_cncl_chrgr_id = #{ACPT_CNCL_USER_ID}
+         , svc_dt            = #{SVC_DT}
+         , svc_plc           = #{SVC_PLC}
+         , svc_chrgr_id       = #{SVC_USER_ID}
+         , term_dt           = #{TERM_DT}
+         , term_plc          = #{TERM_PLC}
+         , term_chrgr_id      = #{TERM_USER_ID}
+         , stop_dt           = #{STOP_DT}
+         , stop_plc          = #{STOP_PLC}
+         , stop_chrgr_id      = #{STOP_USER_ID}
+         , stop_cncl_dt      = #{STOP_CNCL_DT}
+         , stop_cncl_plc     = #{STOP_CNCL_PLC}
+         , stop_cncl_chrgr_id = #{STOP_CNCL_USER_ID}
+         , rmks              = #{RMKS}
+         , upd_cnt           =  upd_cnt + 1
+         , mod_user_id       = 'TkpSwingWireRsal'
+         , mod_dtm           =  DATE_FORMAT(sysdate(), '%Y%m%d%H%i%s' )
+     WHERE skb_sale_no       = #{SKB_SALE_NO}
+       AND skb_sale_chg_seq  = #{SKB_SALE_CHG_SEQ}		]]>
+	</update>
+	<update id="saveBLineMgmtProc" parameterType="hashmap" >
+		<![CDATA[		UPDATE /*+ TKPUKI08700_saveBLineMgmtProc_유선상품 판매원장 수정_김연석_김연석 */
+           TTKP_BLINE_MGMT
+       SET acpt_dt           = #{ACPT_DT}
+         , acpt_plc          = #{ACPT_PLC}
+         , acpt_chrgr_id      = #{ACPT_USER_ID}
+         , acpt_cncl_dt      = #{ACPT_CNCL_DT}
+         , acpt_cncl_plc     = #{ACPT_CNCL_PLC}
+         , acpt_cncl_chrgr_id = #{ACPT_CNCL_USER_ID}
+         , svc_dt            = #{SVC_DT}
+         , svc_plc           = #{SVC_PLC}
+         , svc_chrgr_id       = #{SVC_USER_ID}
+         , term_dt           = #{TERM_DT}
+         , term_plc          = #{TERM_PLC}
+         , term_chrgr_id      = #{TERM_USER_ID}
+         , stop_dt           = #{STOP_DT}
+         , stop_plc          = #{STOP_PLC}
+         , stop_chrgr_id      = #{STOP_USER_ID}
+         , stop_cncl_dt      = #{STOP_CNCL_DT}
+         , stop_cncl_plc     = #{STOP_CNCL_PLC}
+         , stop_cncl_chrgr_id = #{STOP_CNCL_USER_ID}
+         , rmks              = #{RMKS}
+         , upd_cnt           =  upd_cnt + 1
+         , mod_user_id       = 'TkpSwingWireRsal'
+         , mod_dtm           =  DATE_FORMAT(sysdate(), '%Y%m%d%H%i%s' )
+     WHERE skb_sale_no       = #{SKB_SALE_NO}
+       AND skb_sale_chg_seq  = #{SKB_SALE_CHG_SEQ}		]]>
+	</update>
+</mapper>

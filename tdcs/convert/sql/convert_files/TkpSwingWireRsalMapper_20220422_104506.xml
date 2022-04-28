@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+    <!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    <mapper namespace="com.skt.tdcs.batch.tkp.uki.mapper.TkpSwingWireRsalMapper">
+	<update id="saveBlineIf" parameterType="hashmap" >
+		UPDATE /*+ TKPUKI08700_saveBlineIf_오류 메시지 처리 */
+           TTKP_BLINE_IF
+       SET ps_apnd_yn = 'N'
+         , rmks       = #{RMKS}
+         , error_cl   = 'E2'
+     WHERE op_dt      = #{OP_DT}
+       AND op_tm      = #{OP_TM}
+       AND seq        = #{SEQ}
+	</update>
+	<update id="saveBlineIfPSApnd" parameterType="hashmap" >
+		UPDATE /*+ TKPUKI08700_saveBlineIfPSApnd_APPEND */
+           TTKP_BLINE_IF
+       SET ps_apnd_yn = 'Y'
+     WHERE op_dt      = #{OP_DT}
+       AND op_tm      = #{OP_TM}
+       AND seq        = #{SEQ}
+	</update>
+	<update id="saveBLineMgmt" parameterType="hashmap" >
+		UPDATE /*+ TKPUKI08700_saveBLineMgmt_유선상품 판매원장 수정_김연석_김연석 */
+           TTKP_BLINE_MGMT
+       SET prod_cl           = #{PROD_CL}
+         , prod_id           = #{PROD_ID}
+         , CELL_SVC_MGMT_NUM = #{CELL_SVC_MGMT_NUM}
+         , SKB_SVC_MGMT_NUM  = #{SKB_SVC_MGMT_NUM}
+         , package_no        = #{PACKAGE_NO}
+         , cust_cl           = #{CUST_CL}
+         , cust_nm           = #{CUST_NM}
+         , cust_biz_num      = XX1.ENC_VARCHAR2_INS(#{CUST_BIZ_NUM}, 10, 'PSKEY')
+         , CELL_SVC_NUM      = #{CELL_SVC_NUM}
+         , cust_tel_no       = #{CUST_TEL_NO}
+         , zip_cd            = #{ZIP_CD}
+         , base_addr         = #{BASE_ADDR}
+         , dtl_addr          = #{DTL_ADDR}
+         , bill_cl           = #{BILL_CL}
+         , bank_cd           = #{BANK_CD}
+         , bank_cl           = #{BANK_CL}
+         , bank_acc_no       = #{BANK_ACC_NO}
+         , cell_phone_typ    = #{CELL_PHONE_TYP}
+         , cell_phone_svc_dt = #{CELL_PHONE_SVC_DT}
+         , cell_svc_plc      = #{CELL_PLC}
+         , proc_chrgr_id     = #{PROC_CHRGR_ID}
+         , sale_chrgr_id     = #{SALE_CHRGR_ID}
+         , supl_chrgr_id     = #{SALE_CHRGR_ID}
+         , agrmt_prd_cd      = #{AGRMT_PRD_CD}
+         , set_prd_cd        = #{SET_PRD_CD}
+         , ent_fee_typ       = #{ENT_FEE_TYP}
+         , ent_fee           = #{ENT_FEE}
+         , mnp_cl            = #{MNP_CL}
+         , bf_comm_nm        = #{BF_COMM_NM}
+         , bf_svc_num        = #{BF_SVC_NUM}
+         , tel_sev           = #{TEL_SEV}
+         , tel_sev_nm        = #{TEL_SEV_NM}
+         , proc_typ          = #{PROC_TYP}
+         , proc_dt           = #{PROC_DT}
+         , fst_acpt_dt       = #{FST_ACPT_DT}
+         , gift_cd           = #{GIFT_CD}
+         , gift_nm           = #{GIFT_NM}
+         , disc_svc_cd1      = #{DISC_SVC_CD1}
+         , disc_svc_cd2      = #{DISC_SVC_CD2}
+         , disc_svc_cd3      = #{DISC_SVC_CD3}
+         , disc_svc_cd4      = #{DISC_SVC_CD4}
+         , disc_svc_cd5      = #{DISC_SVC_CD5}
+         , disc_svc_cd6      = #{DISC_SVC_CD6}
+         , disc_svc_cd7      = #{DISC_SVC_CD7}
+         , disc_svc_cd8      = #{DISC_SVC_CD8}
+         , disc_svc_cd9      = #{DISC_SVC_CD9}
+         , disc_svc_cd10     = #{DISC_SVC_CD10}
+         , cell_scrb_typ     = #{CELL_SCRB_TYP}
+         , eqp_mdl_cd        = #{EQP_MDL_CD}
+         , eqp_ser_num       = #{EQP_SER_NUM}
+         , skt_proc_chrgr_id = #{SKT_PROC_CHRGR_ID}
+         , tb_family_cd      = #{TB_FAMILY_CD}
+         , tb_svc_line_cnt   = #{TB_SVC_LINE_CNT}
+         , stop_rsn_nm       = #{STOP_RSN_NM}
+         , tech_cl           = #{TECH_CL}
+         , sl_cl             = #{SL_CL}
+         , sl_net_cd         = #{SL_NET_CD}
+         , company_cl        = #{COMPANY_CL}
+         , proc_stat         = #{PROC_STAT}
+         , proc_plc          = #{PROC_PLC}
+         , stl_plc           = #{STL_PLC}
+         , acpt_dt           = #{ACPT_DT}
+         , acpt_plc          = #{ACPT_PLC}
+         , acpt_chrgr_id      = #{ACPT_USER_ID}
+         , acpt_cncl_dt      = #{ACPT_CNCL_DT}
+         , acpt_cncl_plc     = #{ACPT_CNCL_PLC}
+         , acpt_cncl_chrgr_id = #{ACPT_CNCL_USER_ID}
+         , svc_dt            = #{SVC_DT}
+         , svc_plc           = #{SVC_PLC}
+         , svc_chrgr_id       = #{SVC_USER_ID}
+         , term_dt           = #{TERM_DT}
+         , term_plc          = #{TERM_PLC}
+         , term_chrgr_id      = #{TERM_USER_ID}
+         , stop_dt           = #{STOP_DT}
+         , stop_plc          = #{STOP_PLC}
+         , stop_chrgr_id      = #{STOP_USER_ID}
+         , stop_cncl_dt      = #{STOP_CNCL_DT}
+         , stop_cncl_plc     = #{STOP_CNCL_PLC}
+         , stop_cncl_chrgr_id = #{STOP_CNCL_USER_ID}
+         , rmks              = #{RMKS}
+         , upd_cnt           =  upd_cnt + 1 
+         , mod_user_id       = 'TkpSwingWireRsal'
+         , mod_dtm           =  DATE_FORMAT(sysdate(), '%Y%m%d%H%i%s' )
+     WHERE skb_sale_no       = #{SKB_SALE_NO}
+       AND skb_sale_chg_seq  = #{SKB_SALE_CHG_SEQ}
+	</update>
+	<update id="saveBLineMgmtProc" parameterType="hashmap" >
+		UPDATE /*+ TKPUKI08700_saveBLineMgmtProc_유선상품 판매원장 수정_김연석_김연석 */
+           TTKP_BLINE_MGMT
+       SET acpt_dt           = #{ACPT_DT}
+         , acpt_plc          = #{ACPT_PLC}
+         , acpt_chrgr_id      = #{ACPT_USER_ID}
+         , acpt_cncl_dt      = #{ACPT_CNCL_DT}
+         , acpt_cncl_plc     = #{ACPT_CNCL_PLC}
+         , acpt_cncl_chrgr_id = #{ACPT_CNCL_USER_ID}
+         , svc_dt            = #{SVC_DT}
+         , svc_plc           = #{SVC_PLC}
+         , svc_chrgr_id       = #{SVC_USER_ID}
+         , term_dt           = #{TERM_DT}
+         , term_plc          = #{TERM_PLC}
+         , term_chrgr_id      = #{TERM_USER_ID}
+         , stop_dt           = #{STOP_DT}
+         , stop_plc          = #{STOP_PLC}
+         , stop_chrgr_id      = #{STOP_USER_ID}
+         , stop_cncl_dt      = #{STOP_CNCL_DT}
+         , stop_cncl_plc     = #{STOP_CNCL_PLC}
+         , stop_cncl_chrgr_id = #{STOP_CNCL_USER_ID}
+         , rmks              = #{RMKS}
+         , upd_cnt           =  upd_cnt + 1
+         , mod_user_id       = 'TkpSwingWireRsal'
+         , mod_dtm           =  DATE_FORMAT(sysdate(), '%Y%m%d%H%i%s' )
+     WHERE skb_sale_no       = #{SKB_SALE_NO}
+       AND skb_sale_chg_seq  = #{SKB_SALE_CHG_SEQ}
+	</update>
+</mapper>

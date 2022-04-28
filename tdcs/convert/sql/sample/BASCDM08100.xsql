@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+ <!DOCTYPE sqlMap PUBLIC "-//iBATIS.com//DTD SQL Map 2.0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="BASCDM08100">
+	<insert id="saveProdCdIf" parameterClass="hmap">
+	<![CDATA[
+        INSERT INTO TBAS_ADD_PROD_CD_IF
+            (
+                OP_DT,
+                OP_TM,
+                SEQ,
+                PROD_ID,
+                PROD_NM,
+                SVC_PROD_CD,
+                PROD_ST,
+                MKTG_DT,
+                SCRB_STOP_DT,
+                WDRL_DT,
+                COMB_PROD_YN,
+                WIRE_CL,
+                BAS_FEE_AMT,  		/* 20170314 추가 컬럼 */
+                SVC_CD,				/* 20170314 추가 컬럼 */
+                SVC_DTL_CL_CD,  	/* 20170314 추가 컬럼 */
+                SUP_PROD_BAS_CL_CD,
+                SUP_PROD_BAS_CL_NM,
+                PLM_PROD_TYP_CD,
+                PLM_PROD_TYP_NM,
+                PROD_BAS_CL_CD,
+                PROD_BAS_CL_NM,
+                PROD_DTL_CD,
+                PROD_DTL_NM,
+                APLY_YN,
+                EXIST,
+                INS_DTM,
+                MOD_DTM
+            )
+            VALUES
+            (
+				TO_CHAR(SYSDATE, 'YYYYMMDD'),      /* OP_DT */
+				#OP_TM#, 						   /* OP_TM */
+				NVL((SELECT MAX(SEQ)+1 FROM TBAS_ADD_PROD_CD_IF WHERE OP_DT = TO_CHAR(SYSDATE, 'YYYYMMDD')), 1), /* SEQ */
+				TRIM(SUBSTRB(#REC_STR#, 3, 10)),   /* PROD_ID */
+				TRIM(SUBSTRB(#REC_STR#, 13, 80)),  /* PROD_NM */
+				DECODE(TRIM(SUBSTRB(#REC_STR#, 93, 1)),'4','5',TRIM(SUBSTRB(#REC_STR#, 93, 1))),   /* SVC_PROD_CD */			
+				TRIM(SUBSTRB(#REC_STR#, 94, 5)),   /* PROD_ST */
+				TRIM(SUBSTRB(#REC_STR#, 99, 8)),   /* MKTG_DT */
+				TRIM(SUBSTRB(#REC_STR#, 107, 8)),  /* SCRB_STOP_DT */
+				TRIM(SUBSTRB(#REC_STR#, 115, 8)),  /* WDRL_DT[LEAV_DT] */
+				TRIM(SUBSTRB(#REC_STR#, 123, 1)),  /* COMB_PROD_YN */
+				TRIM(SUBSTRB(#REC_STR#, 124, 1)),  /* WIRE_CL */
+				TRIM(SUBSTRB(#REC_STR#, 125, 11)), /* BAS_FEE_AMT */			/* 20170314 추가 컬럼 */
+				TRIM(SUBSTRB(#REC_STR#, 136, 1)),  /* SVC_CD */			        /* 20170314 추가 컬럼 */
+				TRIM(SUBSTRB(#REC_STR#, 137, 2)),  /* SVC_DTL_CL_CD */			/* 20170314 추가 컬럼 */
+				TRIM(SUBSTRB(#REC_STR#, 139, 5)),  /* SUP_PROD_BAS_CL_CD */
+				TRIM(SUBSTRB(#REC_STR#, 144, 40)), /* SUP_PROD_BAS_CL_NM */
+				TRIM(SUBSTRB(#REC_STR#, 184, 1)),  /* PLM_PROD_TYP_CD */
+				TRIM(SUBSTRB(#REC_STR#, 185, 40)), /* PLM_PROD_TYP_NM */
+				TRIM(SUBSTRB(#REC_STR#, 225, 5)),  /* PROD_BAS_CL_CD */
+				TRIM(SUBSTRB(#REC_STR#, 230, 40)), /* PROD_BAS_CL_NM */
+				TRIM(SUBSTRB(#REC_STR#, 270, 12)), /* PROD_DTL_CD */
+				TRIM(SUBSTRB(#REC_STR#, 282, 40)), /* PROD_DTL_NM */
+				'N',
+				(	SELECT 
+						COUNT(SUPL_SVC_CD)
+					FROM
+						TBAS_SUPL_SVC_MGMT
+					WHERE
+						DEL_YN = 'N' 
+					AND
+						SUPL_SVC_CD	= TRIM(SUBSTRB(#REC_STR#, 3, 10))
+				),
+				TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+				TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+            )
+	]]>
+	</insert>
+
+	<insert id="saveEqpMdlIf" parameterClass="hmap">
+	<![CDATA[
+        INSERT INTO tbas_eqp_mdl_if
+            (
+                op_dt,
+                op_tm,
+                seq,
+                mfact_cd,
+                eqp_mdl_nm,
+                eqp_cl_cd,
+                eqp_mdl_cd,
+                link_color_cnt,
+                link_color_cd,
+                dstrb_eqp_yn,
+                mktg_dt,
+                end_dt,
+                aply_yn,
+                exist,
+                ins_dtm,
+                mod_dtm,
+                cdma_cl,
+                esim_eqp_yn,
+                dual_sim_eqp_yn
+            )
+            VALUES
+            (
+				TO_CHAR(SYSDATE, 'YYYYMMDD'),
+				#OP_TM#,
+				NVL((SELECT MAX(SEQ)+1 
+				       FROM tbas_eqp_mdl_if 
+				      WHERE op_dt = TO_CHAR(SYSDATE, 'YYYYMMDD') 
+				        ), 1),
+				TRIM(SUBSTRB(#REC_STR#, 3, 10)),
+				TRIM(SUBSTRB(#REC_STR#, 13, 80)),
+				TRIM(SUBSTRB(#REC_STR#, 93, 1)),
+				TRIM(SUBSTRB(#REC_STR#, 94, 5)),
+				TRIM(SUBSTRB(#REC_STR#, 99, 2)),
+				TRIM(SUBSTRB(#REC_STR#, 101, 20)),
+				TRIM(SUBSTRB(#REC_STR#, 121, 1)),
+				TRIM(SUBSTRB(#REC_STR#, 122, 8)),
+				NVL(TRIM(SUBSTRB(#REC_STR#, 130, 8)),'99991231'),
+			   (SELECT decode(count(*),0,'N','X') /* 기존 등록되어 있는 데이터와 비교하여 변경건이 있는경우 N 없는 경우 X */
+				  FROM tbas_prod_mgmt a,
+				       tbas_deal_co_mgmt b
+				 WHERE a.mfact_id = b.deal_co_cd
+				   AND b.del_yn = 'N'
+				   AND TO_CHAR(SYSDATE, 'yyyymmddhh24miss') BETWEEN  b.EFF_STA_DTM and  b.EFF_END_DTM /* jyg 99991231 수정 20170417  */
+				   AND prod_nm  = TRIM(SUBSTRB(#REC_STR#, 13, 80))
+				   AND prod_cd  = TRIM(SUBSTRB(#REC_STR#, 94, 5))   
+				   AND biz_cd   = TRIM(SUBSTRB(#REC_STR#, 3, 10))   
+				   AND end_dt   = NVL(TRIM(SUBSTRB(#REC_STR#, 130, 8)),'99991231')
+				   AND com_mthd = TRIM(SUBSTRB(#REC_STR#, 151, 1))
+				   AND a.del_yn = 'N'    
+				   ]]><isNotEmpty prepend="AND" property="colorData">
+				   <![CDATA[  
+				       to_number(trim(substrb(#REC_STR#, 99, 2))) = (select count(*)
+				                                                       from tbas_prod_color
+				                                                      where prod_cd = a.prod_cd
+				                                                        and color_cd in 
+				                                                         ]]><iterate property="colorData" open="(" close=")" conjunction=","> #colorData[]# </iterate><![CDATA[ 
+ 
+				                                                        and del_yn = 'N')   
+				                                                        
+				                                                     
+				   ]]>
+				   </isNotEmpty>	
+				  <![CDATA[			   
+				 ),				
+				(SELECT COUNT(prod_cd)
+				   FROM tbas_prod_mgmt
+				  WHERE del_yn = 'N' 
+					AND prod_cd	= TRIM(SUBSTRB(#REC_STR#, 94, 5))),
+				TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+				TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+				TRIM(SUBSTRB(#REC_STR#, 151, 1)),
+				TRIM(SUBSTRB(#REC_STR#, 154, 1)),
+				DECODE(NVL(TRIM(SUBSTRB(#REC_STR#, 155, 2)),'01'),'01','N','02','N','Y')
+            )
+	]]>
+	</insert>
+	
+	<insert id="saveCommCdIf" parameterClass="hmap">
+	<![CDATA[
+        INSERT INTO tbas_comm_cd_if
+            (
+                op_dt,
+                op_tm,
+                seq,
+                
+                cd_val,
+                cd_val_nm,
+                cd_id,
+                aply_yn,
+                exist,
+                
+                ins_dtm,
+                mod_dtm
+            )
+            VALUES
+            (
+				TO_CHAR(SYSDATE, 'YYYYMMDD'),
+				#OP_TM#,
+				NVL((SELECT MAX(SEQ)+1 FROM tbas_comm_cd_if WHERE op_dt = TO_CHAR(SYSDATE, 'YYYYMMDD') ), 1),
+
+				TRIM(SUBSTRB(#REC_STR#, 3, 10)),
+				TRIM(SUBSTRB(#REC_STR#, 13, 80)),
+				TRIM(SUBSTRB(#REC_STR#, 93, 12)),
+				'N',
+				(
+					SELECT 
+						COUNT(*)
+					FROM
+						tbas_comm_cd_dtl
+					WHERE
+						del_yn = 'N' 
+					AND
+						comm_cd_id = 
+					(
+						SELECT 
+							comm_cd_val_nm
+						FROM
+							tbas_comm_cd_dtl
+						WHERE
+							del_yn = 'N' 
+						AND
+							comm_cd_val = TRIM(SUBSTRB(#REC_STR#, 93, 12))
+					)
+					AND
+						comm_cd_val = TRIM(SUBSTRB(#REC_STR#, 3, 10))
+				),
+				
+				TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+				TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+            )
+	]]>
+	</insert>
+</sqlMap>

@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.skt.tdcs.batch.xxx">
+	<insert id="saveProdCdIf" parameterType="hashmap" >
+		INSERT INTO TBAS_ADD_PROD_CD_IF
+            (
+                OP_DT	/* 처리일자 */ ,
+                OP_TM	/* 처리시각 */ ,
+                SEQ	/* 순번 */ ,
+                PROD_ID	/* 상품ID */ ,
+                PROD_NM	/* 상품명 */ ,
+                SVC_PROD_CD	/* 서비스상품코드 */ ,
+                PROD_ST_CD	/* 상품상태코드 */ ,
+                MKTG_DT	/* 출시일자 */ ,
+                SCRB_STOP_DT	/* 가입중단일자 */ ,
+                WDRL_DT	/* 단종일자 */ ,
+                COMB_PROD_YN	/* 결합상품여부 */ ,
+                WIRE_CL_CD	/* 유무선구분코드 */ ,
+                BAS_FEE_AMT	/* 가격 */ ,  		
+                SVC_CD	/* 서비스코드 */ ,			
+                SVC_DTL_CL_CD	/* 서비스상세구분코드 */ , 
+                SUP_PROD_BAS_CL_CD	/* 상품대분류코드 */ ,
+                SUP_PROD_BAS_CL_NM	/* 상품대분류명 */ ,
+                PLM_PROD_TYP_CD	/* 상품유형코드 */ ,
+                PLM_PROD_TYP_NM	/* 상품중분류명 */ ,
+                PROD_BAS_CL_CD	/* 상품소분류코드 */ ,
+                PROD_BAS_CL_NM	/* 상품소분류명 */ ,
+                PROD_DTL_CD	/* 상품상세분류코드 */ ,
+                PROD_DTL_NM	/* 상품상세분류명 */ ,
+                APLY_YN	/* 반영여부 */ ,
+                EXIST	/* 구분 */ ,
+                INS_DTM	/* 입력일시 */ ,
+                MOD_DTM	/* 수정일시 */ 
+            )
+            VALUES
+            (
+				TO_CHAR(SYSDATE, 'YYYYMMDD'),      /* OP_DT */
+				#{OP_TM}, 						   /* OP_TM */
+				NVL((SELECT MAX(SEQ)+1 FROM TBAS_ADD_PROD_CD_IF WHERE OP_DT = TO_CHAR(SYSDATE, 'YYYYMMDD')), 1), /* SEQ */
+				TRIM(SUBSTRB(#{REC_STR}, 3, 10)),   /* PROD_ID */
+				TRIM(SUBSTRB(#{REC_STR}, 13, 80)),  /* PROD_NM */
+				DECODE(TRIM(SUBSTRB(#{REC_STR}, 93, 1)),'4','5',TRIM(SUBSTRB(#{REC_STR}, 93, 1))),   /* SVC_PROD_CD */			
+				TRIM(SUBSTRB(#{REC_STR}, 94, 5)),   /* PROD_ST */
+				TRIM(SUBSTRB(#{REC_STR}, 99, 8)),   /* MKTG_DT */
+				TRIM(SUBSTRB(#{REC_STR}, 107, 8)),  /* SCRB_STOP_DT */
+				TRIM(SUBSTRB(#{REC_STR}, 115, 8)),  /* WDRL_DT[LEAV_DT] */
+				TRIM(SUBSTRB(#{REC_STR}, 123, 1)),  /* COMB_PROD_YN */
+				TRIM(SUBSTRB(#{REC_STR}, 124, 1)),  /* WIRE_CL */
+				TRIM(SUBSTRB(#{REC_STR}, 125, 11)), /* BAS_FEE_AMT */			/* 20170314 추가 컬럼 */
+				TRIM(SUBSTRB(#{REC_STR}, 136, 1)),  /* SVC_CD */			        /* 20170314 추가 컬럼 */
+				TRIM(SUBSTRB(#{REC_STR}, 137, 2)),  /* SVC_DTL_CL_CD */			/* 20170314 추가 컬럼 */
+				TRIM(SUBSTRB(#{REC_STR}, 139, 5)),  /* SUP_PROD_BAS_CL_CD */
+				TRIM(SUBSTRB(#{REC_STR}, 144, 40)), /* SUP_PROD_BAS_CL_NM */
+				TRIM(SUBSTRB(#{REC_STR}, 184, 1)),  /* PLM_PROD_TYP_CD */
+				TRIM(SUBSTRB(#{REC_STR}, 185, 40)), /* PLM_PROD_TYP_NM */
+				TRIM(SUBSTRB(#{REC_STR}, 225, 5)),  /* PROD_BAS_CL_CD */
+				TRIM(SUBSTRB(#{REC_STR}, 230, 40)), /* PROD_BAS_CL_NM */
+				TRIM(SUBSTRB(#{REC_STR}, 270, 12)), /* PROD_DTL_CD */
+				TRIM(SUBSTRB(#{REC_STR}, 282, 40)), /* PROD_DTL_NM */
+				'N',
+				(	SELECT 
+						COUNT(SUPL_SVC_CD)
+					FROM
+						TBAS_SUPL_SVC_MGMT
+					WHERE
+						DEL_YN = 'N' 
+					AND
+						SUPL_SVC_CD	= TRIM(SUBSTRB(#{REC_STR}, 3, 10))
+				),
+				TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+				TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+            )
+	</insert>
+	<insert id="saveEqpMdlIf" parameterType="hashmap" >
+		INSERT INTO tbas_eqp_mdl_if
+            (
+                OP_DT	/* 처리일자 */ ,
+                OP_TM	/* 처리시각 */ ,
+                SEQ	/* 순번 */ ,
+                MFACT_CD	/* 제조사코드 */ ,
+                EQP_MDL_NM	/* 단말기모델명 */ ,
+                EQP_CL_CD	/* 기기구분코드 */ ,
+                EQP_MDL_CD	/* 단말기모델코드 */ ,
+                LINK_COLOR_CNT	/* 연결색상수 */ ,
+                LINK_COLOR_CD	/* 연결색상코드 */ ,
+                DSTRB_EQP_YN	/* DSTRB_EQP_YN */ ,
+                MKTG_DT	/* 출시일자 */ ,
+                END_DT	/* 단종일자 */ ,
+                APLY_YN	/* 반영여부 */ ,
+                EXIST	/* EXIST */ ,
+                INS_DTM	/* 입력일시 */ ,
+                MOD_DTM	/* 수정일시 */ ,
+                CDMA_CL_CD	/* CDMA구분코드 */ ,
+                ESIM_EQP_YN	/* Esim모델여부 */ ,
+                DUAL_SIM_EQP_YN	/* DualSim단말여부 */ 
+            )
+            VALUES
+            (
+				TO_CHAR(SYSDATE, 'YYYYMMDD'),
+				#{OP_TM},
+				NVL((SELECT MAX(SEQ)+1 
+				       FROM tbas_eqp_mdl_if 
+				      WHERE op_dt = TO_CHAR(SYSDATE, 'YYYYMMDD') 
+				        ), 1),
+				TRIM(SUBSTRB(#{REC_STR}, 3, 10)),
+				TRIM(SUBSTRB(#{REC_STR}, 13, 80)),
+				TRIM(SUBSTRB(#{REC_STR}, 93, 1)),
+				TRIM(SUBSTRB(#{REC_STR}, 94, 5)),
+				TRIM(SUBSTRB(#{REC_STR}, 99, 2)),
+				TRIM(SUBSTRB(#{REC_STR}, 101, 20)),
+				TRIM(SUBSTRB(#{REC_STR}, 121, 1)),
+				TRIM(SUBSTRB(#{REC_STR}, 122, 8)),
+				NVL(TRIM(SUBSTRB(#{REC_STR}, 130, 8)),'99991231'),
+			   (SELECT decode(count(*),0,'N','X') /* 기존 등록되어 있는 데이터와 비교하여 변경건이 있는경우 N 없는 경우 X */
+				  FROM tbas_prod_mgmt a,
+				       tbas_deal_co_mgmt b
+				 WHERE a.mfact_id = b.deal_co_cd
+				   AND b.del_yn = 'N'
+				   AND TO_CHAR(SYSDATE, 'yyyymmddhh24miss') BETWEEN  b.EFF_STA_DTM and  b.EFF_END_DTM /* jyg 99991231 수정 20170417  */
+				   AND prod_nm  = TRIM(SUBSTRB(#{REC_STR}, 13, 80))
+				   AND prod_cd  = TRIM(SUBSTRB(#{REC_STR}, 94, 5))   
+				   AND biz_cd   = TRIM(SUBSTRB(#{REC_STR}, 3, 10))   
+				   AND end_dt   = NVL(TRIM(SUBSTRB(#{REC_STR}, 130, 8)),'99991231')
+				   AND com_mthd = TRIM(SUBSTRB(#{REC_STR}, 151, 1))
+				   AND a.del_yn = 'N'    
+				   	
+				  			   
+				 ),				
+				(SELECT COUNT(prod_cd)
+				   FROM tbas_prod_mgmt
+				  WHERE del_yn = 'N' 
+					AND prod_cd	= TRIM(SUBSTRB(#{REC_STR}, 94, 5))),
+				TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+				TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+				TRIM(SUBSTRB(#{REC_STR}, 151, 1)),
+				TRIM(SUBSTRB(#{REC_STR}, 154, 1)),
+				DECODE(NVL(TRIM(SUBSTRB(#{REC_STR}, 155, 2)),'01'),'01','N','02','N','Y')
+            )
+	</insert>
+	<insert id="saveCommCdIf" parameterType="hashmap" >
+		INSERT INTO tbas_comm_cd_if
+            (
+                OP_DT	/* IF처리일자 */ ,
+                OP_TM	/* IF처리시각 */ ,
+                SEQ	/* IF순번 */ ,
+                
+                CD_VAL	/* 코드값 */ ,
+                CD_VAL_NM	/* 코드값명 */ ,
+                CD_ID	/* 코드ID */ ,
+                APLY_YN	/* 반영여부 */ ,
+                EXIST	/* 신규/변경여부 */ ,
+                
+                INS_DTM	/* 입력일시 */ ,
+                MOD_DTM	/* 수정일시 */ 
+            )
+            VALUES
+            (
+				TO_CHAR(SYSDATE, 'YYYYMMDD'),
+				#{OP_TM},
+				NVL((SELECT MAX(SEQ)+1 FROM tbas_comm_cd_if WHERE op_dt = TO_CHAR(SYSDATE, 'YYYYMMDD') ), 1),
+
+				TRIM(SUBSTRB(#{REC_STR}, 3, 10)),
+				TRIM(SUBSTRB(#{REC_STR}, 13, 80)),
+				TRIM(SUBSTRB(#{REC_STR}, 93, 12)),
+				'N',
+				(
+					SELECT 
+						COUNT(*)
+					FROM
+						tbas_comm_cd_dtl
+					WHERE
+						del_yn = 'N' 
+					AND
+						comm_cd_id = 
+					(
+						SELECT 
+							comm_cd_val_nm
+						FROM
+							tbas_comm_cd_dtl
+						WHERE
+							del_yn = 'N' 
+						AND
+							comm_cd_val = TRIM(SUBSTRB(#{REC_STR}, 93, 12))
+					)
+					AND
+						comm_cd_val = TRIM(SUBSTRB(#{REC_STR}, 3, 10))
+				),
+				
+				TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'),
+				TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+            )
+	</insert>
+</mapper>
