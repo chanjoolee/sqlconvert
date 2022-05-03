@@ -245,20 +245,48 @@ def convertByFile(asisSqlPath , tobePath , date_format ):
         pass
 
 def convertByInput(sql):
-    # sql = '''
-    #     SELECT  DEAL_CO_CD,  STL_PLC,   DIS_HLD_PLC, DEAL_CO_CL1, DEAL_CO_CL2, SALE_STOP_YN,  PAY_STOP_YN,  NEW_ORG_ID 
-    #                        INTO  rc_SalePLC,  rc_StlPLC, rc_DisPLC,   rc_DealCl1,  rc_DealCl2,  rc_SaleStopYN, rc_PayStopYN, wk_NewOrg 
-    #                        FROM  TBAS_DEAL_CO_MGMT 
-    #                       WHERE  ukey_agency_cd   = iv_AgencyCd 
-    #                         AND  ukey_sub_cd      = iv_SubCd 
-    #                         AND  ukey_channel_cd IS NULL 
-    #                         AND  deal_co_cl1     in ('A2', 'A3', 'AC', 'B1', 'B2', 'C1', 'A6') 
-    #                         AND  deal_sta_dt     <=  rc_ProcDt 
-    #                         AND  deal_end_dt     >=  rc_ProcDt 
-    #                         AND  eff_sta_dtm     <=  iv_ProcDtm 
-    #                         AND  eff_end_dtm     >=  iv_ProcDtm 
-    #                         AND  del_yn           = 'N'; 
-    # '''
+    sql = '''
+    SELECT         tcdm.ASGN_DT                                                                                             
+     || '|' || tam.AGENCY_CD                                                                                                
+     || '|' || tam.AGENCY_NM                                                                                                
+     || '|' || tcdm.PROD_CD                                                                                                 
+     || '|' || tpm.PROD_NM                                                                                                  
+     || '|' || tcdm.COLOR_CD                                                                                                
+     || '|' || FBAS_GET_COMMCDNM_VAL('ZBAS_C_00040', tcdm.COLOR_CD)                                                         
+     || '|' || tcdm.DIS_QTY                                                                                                 
+     || '|' || FBAS_GET_COMMCDNM_VAL('ZBAS_C_00010', tpm.PROD_CL)                                                           
+     || '|' || tpm.PROD_CL                                                                                                  
+     || '|' || (select org_nm from tbas_new_org_mgmt                     
+                 where org_id = decode(tnom.org_level, '3', tnom.sup_org, '2', tnom.org_id)
+                 and #SEARCH_DTM# between aply_sta_dt and aply_end_dt
+                )         
+     || '|' || decode(tnom.org_level, '3', tnom.sup_org, '2', tnom.org_id)                                                  
+     || '|' || decode(tnom.org_level, '3' ,tnom.org_nm, '2', '')                                                            
+     || '|' || decode(tnom.org_level, '3' ,tnom.org_id, '2', '')                                                            
+     || '|' || NVL(
+               (SELECT NVL(B.FIX_CRDT_PRCHS_PRC,0)
+                  FROM TPOL_UPLST A
+                     , TPOL_UPLST_APLY_MDL B
+                 WHERE A.UPLST_ID = B.UPLST_ID
+                   AND A.POL_YM = B.POL_YM
+                   AND A.POL_TS = B.POL_TS
+                   AND A.DEL_YN = 'N'
+                   AND #SEARCH_DTM# || '0000' BETWEEN A.APLY_STA_DTM AND A.APLY_END_DTM
+                   AND B.MDL_ID = TCDM.PROD_CD) ,0)                                                                              /* 상품매입가     */
+     AS MSG
+  FROM TDIS_CNSG_DIS_MGMT tcdm
+     , TBAS_AGENCY_MGMT   tam
+     , TBAS_PROD_MGMT     tpm
+     , TBAS_NEW_ORG_MGMT  tnom                                        
+ WHERE asgn_dt            = #SEARCH_DTM#
+   AND tcdm.HLD_PLC_ID    = tam.agency_cd
+   AND tcdm.PROD_CD       = tpm.PROD_CD
+   AND tam.APLY_STA_DT    <= to_char(sysdate,'YYYYMMDD')
+   AND tam.APLY_END_DT    >= to_char(sysdate,'YYYYMMDD')
+   AND tcdm.DEL_YN        = 'N'
+   AND tam.ORG_CD         = tnom.ORG_ID
+   AND #SEARCH_DTM# BETWEEN tnom.APLY_STA_DT AND tnom.APLY_END_DT        
+   '''
     sqlTobe = []
     parse = sqlparse.parse(sql)
     for vToken in parse[0].tokens : 
@@ -340,7 +368,10 @@ def convert_sql_recursive( xmlFileTobe , _token ) :
     else :
         if ( _token.mapping_info is not None ) :
             m = _token.mapping_info
-            xmlFileTobe.append( m['columnName'] + '\t/* ' + m['columnNameKor'] + ' */\t')
+            if (m['mappingType'] == 'column') :
+                xmlFileTobe.append( m['columnName'] + '\t/* ' + m['columnNameKor'] + ' */\t')
+            elif (m['mappingType'] == 'table') :
+                xmlFileTobe.append( m['tableName'] + '\t/* ' + m['tableNameKor'] + ' */\t')
         else :
             xmlFileTobe.append(_token.value)
         
@@ -381,6 +412,7 @@ def processColumnToken(_token , sqlId , sqltype):
                 v_table_alias = table_token.get_name()
                 v_column_name = _token.value
                 v_find_map = None
+                v_find_table = None
                 parent_token = _token.parent                
                 if (isinstance(parent_token , sqlparse.sql.Identifier ) 
                     and len(parent_token.tokens) == 3 
@@ -398,13 +430,18 @@ def processColumnToken(_token , sqlId , sqltype):
                     v_find_table = mappingJson1.get(v_table_name.strip().upper())
                     if ( v_find_table is not None) :
                         v_find_map = pydash.find(v_find_table, { 'asisColumnName': v_column_name.strip().upper() })
+                        
                 
                 if v_find_map is not None:
                     _token.mapping_info = v_find_map
                     _token.mapping_info['mappingType'] = 'column'
-                    # if v_find_map['columnName'] != v_column_name.strip().upper() :
+                    # if v_find_map['asisColumnName'] != v_column_name.strip().upper() :
                     #     _token.mapping_info = v_find_map
-    
+                    #     _token.mapping_info['mappingType'] = 'column'
+                    
+                    if v_find_table is not None :
+                        set_table_mapping(table_token, v_find_table[0])
+                
     # 다시 돌린다.
     if hasattr(_token, 'tokens') :
         for token in _token.tokens:
@@ -426,6 +463,24 @@ def processColumnToken(_token , sqlId , sqltype):
                 
             
             processColumnToken(token, sqlId , sqltype)
+   
+def set_table_mapping(_table_token , _find_table_map):
+    table_value = _table_token._get_repr_value()
+    if( type(_table_token) == sqlparse.sql.Token 
+         and type(_table_token.ttype) == sqlparse.tokens._TokenType 
+         and _table_token.ttype == sqlparse.tokens.Name
+         and not pydash.includes(g_keyword, _table_token.value)
+         and _table_token.mapping_info is None
+    ):        
+        table_value = _table_token.value
+        table_value_map = _find_table_map['tableName']
+        if table_value_map.strip().upper() == table_value.strip().upper() :
+            _table_token.mapping_info = _find_table_map
+            _table_token.mapping_info['mappingType'] = 'table'
+    else:
+        if hasattr(_table_token, 'tokens') == True :        
+            for token in _table_token.tokens:
+                set_table_mapping(token , _find_table_map)
         
 def get_parent_statement(_token):
     if ( type(_token.parent) == sqlparse.sql.Statement ):
@@ -648,5 +703,6 @@ def prototype():
         
 if __name__ == '__main__':
     make_mappingJson()
-    main()  
-    # convertByInput()                
+    # main() 
+    sql= ''
+    convertByInput(sql)                
