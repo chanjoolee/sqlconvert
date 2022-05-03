@@ -245,48 +245,48 @@ def convertByFile(asisSqlPath , tobePath , date_format ):
         pass
 
 def convertByInput(sql):
-    sql = '''
-    SELECT         tcdm.ASGN_DT                                                                                             
-     || '|' || tam.AGENCY_CD                                                                                                
-     || '|' || tam.AGENCY_NM                                                                                                
-     || '|' || tcdm.PROD_CD                                                                                                 
-     || '|' || tpm.PROD_NM                                                                                                  
-     || '|' || tcdm.COLOR_CD                                                                                                
-     || '|' || FBAS_GET_COMMCDNM_VAL('ZBAS_C_00040', tcdm.COLOR_CD)                                                         
-     || '|' || tcdm.DIS_QTY                                                                                                 
-     || '|' || FBAS_GET_COMMCDNM_VAL('ZBAS_C_00010', tpm.PROD_CL)                                                           
-     || '|' || tpm.PROD_CL                                                                                                  
-     || '|' || (select org_nm from tbas_new_org_mgmt                     
-                 where org_id = decode(tnom.org_level, '3', tnom.sup_org, '2', tnom.org_id)
-                 and #SEARCH_DTM# between aply_sta_dt and aply_end_dt
-                )         
-     || '|' || decode(tnom.org_level, '3', tnom.sup_org, '2', tnom.org_id)                                                  
-     || '|' || decode(tnom.org_level, '3' ,tnom.org_nm, '2', '')                                                            
-     || '|' || decode(tnom.org_level, '3' ,tnom.org_id, '2', '')                                                            
-     || '|' || NVL(
-               (SELECT NVL(B.FIX_CRDT_PRCHS_PRC,0)
-                  FROM TPOL_UPLST A
-                     , TPOL_UPLST_APLY_MDL B
-                 WHERE A.UPLST_ID = B.UPLST_ID
-                   AND A.POL_YM = B.POL_YM
-                   AND A.POL_TS = B.POL_TS
-                   AND A.DEL_YN = 'N'
-                   AND #SEARCH_DTM# || '0000' BETWEEN A.APLY_STA_DTM AND A.APLY_END_DTM
-                   AND B.MDL_ID = TCDM.PROD_CD) ,0)                                                                              /* 상품매입가     */
-     AS MSG
-  FROM TDIS_CNSG_DIS_MGMT tcdm
-     , TBAS_AGENCY_MGMT   tam
-     , TBAS_PROD_MGMT     tpm
-     , TBAS_NEW_ORG_MGMT  tnom                                        
- WHERE asgn_dt            = #SEARCH_DTM#
-   AND tcdm.HLD_PLC_ID    = tam.agency_cd
-   AND tcdm.PROD_CD       = tpm.PROD_CD
-   AND tam.APLY_STA_DT    <= to_char(sysdate,'YYYYMMDD')
-   AND tam.APLY_END_DT    >= to_char(sysdate,'YYYYMMDD')
-   AND tcdm.DEL_YN        = 'N'
-   AND tam.ORG_CD         = tnom.ORG_ID
-   AND #SEARCH_DTM# BETWEEN tnom.APLY_STA_DT AND tnom.APLY_END_DT        
-   '''
+ #    sql = '''
+ #    SELECT         tcdm.ASGN_DT                                                                                             
+ #     || '|' || tam.AGENCY_CD                                                                                                
+ #     || '|' || tam.AGENCY_NM                                                                                                
+ #     || '|' || tcdm.PROD_CD                                                                                                 
+ #     || '|' || tpm.PROD_NM                                                                                                  
+ #     || '|' || tcdm.COLOR_CD                                                                                                
+ #     || '|' || FBAS_GET_COMMCDNM_VAL('ZBAS_C_00040', tcdm.COLOR_CD)                                                         
+ #     || '|' || tcdm.DIS_QTY                                                                                                 
+ #     || '|' || FBAS_GET_COMMCDNM_VAL('ZBAS_C_00010', tpm.PROD_CL)                                                           
+ #     || '|' || tpm.PROD_CL                                                                                                  
+ #     || '|' || (select org_nm from tbas_new_org_mgmt                     
+ #                 where org_id = decode(tnom.org_level, '3', tnom.sup_org, '2', tnom.org_id)
+ #                 and #SEARCH_DTM# between aply_sta_dt and aply_end_dt
+ #                )         
+ #     || '|' || decode(tnom.org_level, '3', tnom.sup_org, '2', tnom.org_id)                                                  
+ #     || '|' || decode(tnom.org_level, '3' ,tnom.org_nm, '2', '')                                                            
+ #     || '|' || decode(tnom.org_level, '3' ,tnom.org_id, '2', '')                                                            
+ #     || '|' || NVL(
+ #               (SELECT NVL(B.FIX_CRDT_PRCHS_PRC,0)
+ #                  FROM TPOL_UPLST A
+ #                     , TPOL_UPLST_APLY_MDL B
+ #                 WHERE A.UPLST_ID = B.UPLST_ID
+ #                   AND A.POL_YM = B.POL_YM
+ #                   AND A.POL_TS = B.POL_TS
+ #                   AND A.DEL_YN = 'N'
+ #                   AND #SEARCH_DTM# || '0000' BETWEEN A.APLY_STA_DTM AND A.APLY_END_DTM
+ #                   AND B.MDL_ID = TCDM.PROD_CD) ,0)                                                                              /* 상품매입가     */
+ #     AS MSG
+ #  FROM TDIS_CNSG_DIS_MGMT tcdm
+ #     , TBAS_AGENCY_MGMT   tam
+ #     , TBAS_PROD_MGMT     tpm
+ #     , TBAS_NEW_ORG_MGMT  tnom                                        
+ # WHERE asgn_dt            = #SEARCH_DTM#
+ #   AND tcdm.HLD_PLC_ID    = tam.agency_cd
+ #   AND tcdm.PROD_CD       = tpm.PROD_CD
+ #   AND tam.APLY_STA_DT    <= to_char(sysdate,'YYYYMMDD')
+ #   AND tam.APLY_END_DT    >= to_char(sysdate,'YYYYMMDD')
+ #   AND tcdm.DEL_YN        = 'N'
+ #   AND tam.ORG_CD         = tnom.ORG_ID
+ #   AND #SEARCH_DTM# BETWEEN tnom.APLY_STA_DT AND tnom.APLY_END_DT        
+ #   '''
     sqlTobe = []
     parse = sqlparse.parse(sql)
     for vToken in parse[0].tokens : 
