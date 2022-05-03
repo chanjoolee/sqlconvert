@@ -368,9 +368,9 @@ def convert_sql_recursive( xmlFileTobe , _token ) :
     else :
         if ( _token.mapping_info is not None ) :
             m = _token.mapping_info
-            if (m['mappingType'] == 'column') :
+            if (_token.mappingType == 'column') :
                 xmlFileTobe.append( m['columnName'] + '\t/* ' + m['columnNameKor'] + ' */\t')
-            elif (m['mappingType'] == 'table') :
+            elif (_token.mappingType == 'table') :
                 xmlFileTobe.append( m['tableName'] + '\t/* ' + m['tableNameKor'] + ' */\t')
         else :
             xmlFileTobe.append(_token.value)
@@ -434,13 +434,13 @@ def processColumnToken(_token , sqlId , sqltype):
                 
                 if v_find_map is not None:
                     _token.mapping_info = v_find_map
-                    _token.mapping_info['mappingType'] = 'column'
+                    _token.mappingType = 'column'
                     # if v_find_map['asisColumnName'] != v_column_name.strip().upper() :
                     #     _token.mapping_info = v_find_map
                     #     _token.mapping_info['mappingType'] = 'column'
                     
-                    if v_find_table is not None :
-                        set_table_mapping(table_token, v_find_table[0])
+                    # if v_find_table is not None :
+                    set_table_mapping(table_token, v_find_table[0])
                 
     # 다시 돌린다.
     if hasattr(_token, 'tokens') :
@@ -465,22 +465,29 @@ def processColumnToken(_token , sqlId , sqltype):
             processColumnToken(token, sqlId , sqltype)
    
 def set_table_mapping(_table_token , _find_table_map):
-    table_value = _table_token._get_repr_value()
+    # table_value = _table_token._get_repr_value()
     if( type(_table_token) == sqlparse.sql.Token 
-         and type(_table_token.ttype) == sqlparse.tokens._TokenType 
-         and _table_token.ttype == sqlparse.tokens.Name
-         and not pydash.includes(g_keyword, _table_token.value)
-         and _table_token.mapping_info is None
+        and type(_table_token.ttype) == sqlparse.tokens._TokenType 
+        and _table_token.ttype == sqlparse.tokens.Name
+        and (not pydash.includes(g_keyword, _table_token.value))
+        and _table_token.mapping_info is None
     ):        
         table_value = _table_token.value
-        table_value_map = _find_table_map['tableName']
+        table_value_map = _find_table_map['asisTableName']
         if table_value_map.strip().upper() == table_value.strip().upper() :
             _table_token.mapping_info = _find_table_map
-            _table_token.mapping_info['mappingType'] = 'table'
-    else:
-        if hasattr(_table_token, 'tokens') == True :        
-            for token in _table_token.tokens:
-                set_table_mapping(token , _find_table_map)
+            _table_token.mappingType = 'table'
+            
+            
+    
+    if hasattr(_table_token, 'tokens'):        
+        for token in _table_token.tokens:
+            if token.is_whitespace :
+                continue
+            if isinstance(token, sqlparse.sql.Comment):
+                continue
+            
+            set_table_mapping(token , _find_table_map)
         
 def get_parent_statement(_token):
     if ( type(_token.parent) == sqlparse.sql.Statement ):
