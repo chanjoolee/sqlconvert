@@ -142,8 +142,11 @@ def main():
     
     ### by Folder
     # path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch\java\com\sktps\batch\rmt\acc\db'
-    # path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch'
-    path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\dis'
+    # 배치
+    path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch'
+    # 재고
+    # path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\dis'
+    # 정산
     # path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\acc'
     print("Start By Foler")
     print("Folder : " + path_from)
@@ -224,6 +227,9 @@ def convertByFile(asisSqlPath , tobePath , date_format ):
                         if vToken._get_repr_name() == 'Comment':
                             continue
                         # table check
+                        if is_pre_error(vToken) :
+                            continue
+                        
                         processColumnToken(vToken , sqlId , sqlList)
                     print('\t\tEnd : ' + get_date_format())
         
@@ -245,49 +251,17 @@ def convertByFile(asisSqlPath , tobePath , date_format ):
         pass
 
 def convertByInput(sql):
-#     sql = '''
-#    SELECT         tcdm.ASGN_DT                                                                                             
-#     || '|' || tam.AGENCY_CD                                                                                                
-#     || '|' || tam.AGENCY_NM                                                                                                
-#     || '|' || tcdm.PROD_CD                                                                                                 
-#     || '|' || tpm.PROD_NM                                                                                                  
-#     || '|' || tcdm.COLOR_CD                                                                                                
-#     || '|' || FBAS_GET_COMMCDNM_VAL('ZBAS_C_00040', tcdm.COLOR_CD)                                                         
-#     || '|' || tcdm.DIS_QTY                                                                                                 
-#     || '|' || FBAS_GET_COMMCDNM_VAL('ZBAS_C_00010', tpm.PROD_CL)                                                           
-#     || '|' || tpm.PROD_CL                                                                                                  
-#     || '|' || (select org_nm from tbas_new_org_mgmt                     
-#                 where org_id = decode(tnom.org_level, '3', tnom.sup_org, '2', tnom.org_id)
-#                 and #SEARCH_DTM# between aply_sta_dt and aply_end_dt
-#                )         
-#     || '|' || decode(tnom.org_level, '3', tnom.sup_org, '2', tnom.org_id)                                                  
-#     || '|' || decode(tnom.org_level, '3' ,tnom.org_nm, '2', '')                                                            
-#     || '|' || decode(tnom.org_level, '3' ,tnom.org_id, '2', '')                                                            
-#     || '|' || NVL(
-#               ( SELECT NVL(B.FIX_CRDT_PRCHS_PRC,0)
-#                  FROM TPOL_UPLST A
-#                     , TPOL_UPLST_APLY_MDL B
-#                 WHERE A.UPLST_ID = B.UPLST_ID
-#                   AND A.POL_YM = B.POL_YM
-#                   AND A.POL_TS = B.POL_TS
-#                   AND A.DEL_YN = 'N'
-#                   AND #SEARCH_DTM# || '0000' BETWEEN A.APLY_STA_DTM AND A.APLY_END_DTM
-#                   AND B.MDL_ID = TCDM.PROD_CD
-#                 ) ,0)                                                                              /* 상품매입가     */
-#     AS MSG
-#  FROM TDIS_CNSG_DIS_MGMT tcdm
-#     , TBAS_AGENCY_MGMT   tam
-#     , TBAS_PROD_MGMT     tpm
-#     , TBAS_NEW_ORG_MGMT  tnom                                        
-# WHERE asgn_dt            = #SEARCH_DTM#
-#   AND tcdm.HLD_PLC_ID    = tam.agency_cd
-#   AND tcdm.PROD_CD       = tpm.PROD_CD
-#   AND tam.APLY_STA_DT    <= to_char(sysdate,'YYYYMMDD')
-#   AND tam.APLY_END_DT    >= to_char(sysdate,'YYYYMMDD')
-#   AND tcdm.DEL_YN        = 'N'
-#   AND tam.ORG_CD         = tnom.ORG_ID
-#   AND #SEARCH_DTM# BETWEEN tnom.APLY_STA_DT AND tnom.APLY_END_DT        
-#   '''
+    # sql = '''
+    #     UPDATE TBAS_BAT_LOG SET 
+    #         END_DTM = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+    #     ,   RMKS= #RMKS#
+    #     ,   UPD_CNT = UPD_CNT+1
+    #     ,   MOD_DTM = TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS')
+    #     ,   OP_RSLT = 'S'
+    #     WHERE  PROG_ID = 'BASBIB28' 
+    #       AND OP_DT= #OP_DT#       
+    # 
+    # '''
     
     sql1 = changeVariableTemplate( sql )
     sqlTobe = []
@@ -298,6 +272,10 @@ def convertByInput(sql):
         if vToken._get_repr_name() == 'Comment':
             continue
         # table check
+                
+        if is_pre_error(vToken) :
+            continue
+        
         processColumnToken(vToken , "xxx" , "xxx")
         
     convert_sql_recursive( sqlTobe , parse[0] ) 
@@ -372,9 +350,15 @@ def convert_sql_recursive( xmlFileTobe , _token ) :
         if ( _token.mapping_info is not None ) :
             m = _token.mapping_info
             if (_token.mappingType == 'column') :
-                xmlFileTobe.append( m['columnName'] + '\t/* ' + m['columnNameKor'] + ' */\t')
+                if m['columnName'] != m['asisColumnName'] :
+                    xmlFileTobe.append( m['columnName'] + '\t/* ' + m['columnNameKor'] + ' changeFrom ' +  m['asisColumnName'] + ' */\t')
+                else:
+                    xmlFileTobe.append( m['columnName'] + '\t/* ' + m['columnNameKor'] + ' */\t')
             elif (_token.mappingType == 'table') :
-                xmlFileTobe.append( m['tableName'] + '\t/* ' + m['tableNameKor'] + ' */\t')
+                if m['tableName'] != m['asisTableName'] :
+                    xmlFileTobe.append( m['tableName'] + '\t/* ' + m['tableNameKor'] + ' changeFrom ' +  m['asisTableName'] +' */\t')
+                else:
+                    xmlFileTobe.append( m['tableName'] + '\t/* ' + m['tableNameKor'] + ' */\t')
         else :
             xmlFileTobe.append(_token.value)
         
@@ -388,7 +372,7 @@ def processColumnToken(_token , sqlId , sqltype):
          and not pydash.includes(g_keyword, _token.value)
         # and sqlparse.tokens.Keyword.DML
     ):
-        is_ibatis_var = False
+        is_ibatis_var = False        
         token_index_1  = _token.parent.token_index(_token)
         if token_index_1 > 0 :
             v_pre = _token.parent.token_prev(token_index_1)
@@ -453,19 +437,33 @@ def processColumnToken(_token , sqlId , sqltype):
             if isinstance(token, sqlparse.sql.Comment):
                 continue
             
-            # '#{xxx}' 로 감싸인 것을 처리하기 위함 mybatis
-            token_index = token.parent.token_index(token)
-            if token_index > 0 :
-                v_pre = token.parent.token_prev(token_index)
-                if(v_pre is not None ) :
-                    if( v_pre[1].ttype == sqlparse.tokens.Error ) :
-                        continue 
-            # '#' 로 시작하는 것을 처리하기 위함 ibatiss
-            if hasattr(token, 'value') and type(token.value) == str and token.value.startswith('#') :
+            # # '#{xxx}' 로 감싸인 것을 처리하기 위함 mybatis
+            # token_index = token.parent.token_index(token)
+            # if token_index > 0 :
+            #     v_pre = token.parent.token_prev(token_index)
+            #     if(v_pre is not None ) :
+            #         if( v_pre[1].ttype == sqlparse.tokens.Error ) :
+            #             continue 
+            
+            # # '#' 로 시작하는 것을 처리하기 위함 ibatiss
+            # if hasattr(token, 'value') and type(token.value) == str and token.value.startswith('#') :
+            #     continue
+            if is_pre_error(token) :
                 continue
-                
             
             processColumnToken(token, sqlId , sqltype)
+
+# '#{xxx}' 로 감싸인 것을 처리하기 위함 mybatis
+def is_pre_error(token):
+    token_index = token.parent.token_index(token)
+    if token_index > 0 :
+        v_pre = token.parent.token_prev(token_index)
+        if(v_pre is not None) :
+            if(  hasattr(v_pre[1], 'ttype') and v_pre[1].ttype == sqlparse.tokens.Error ) :
+                return True 
+    # '#' 로 시작하는 것을 처리하기 위함 ibatiss       
+    if hasattr(token, 'value') and type(token.value) == str and token.value.startswith('#') :
+        return True
    
 def set_table_mapping(_table_token , _find_table_map):
     # table_value = _table_token._get_repr_value()
@@ -713,6 +711,6 @@ def prototype():
         
 if __name__ == '__main__':
     make_mappingJson()
-    # main() 
-    sql= ''
-    convertByInput(sql)                
+    main() 
+    # sql= ''
+    # convertByInput(sql)                
