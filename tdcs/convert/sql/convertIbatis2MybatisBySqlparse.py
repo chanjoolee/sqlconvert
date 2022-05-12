@@ -1,7 +1,9 @@
 import pydash
 import os
+import subprocess
 from fnmatch import fnmatch
 import pandas
+import requests
 import json
 import re
 import sqlparse
@@ -11,6 +13,7 @@ from pathlib import Path
 import datetime
 from pandas.io.common import file_path_to_url
 import pyperclip
+import codecs
 
 
 g_keyword = [
@@ -26,6 +29,7 @@ g_keyword = [
 
 mappingJson = []
 mappingJson1 = {}
+mode ='bat' # bat dis acc
 
 def get_query_columns(_sql):
     stmt = sqlparse.parse(_sql)[0]
@@ -132,22 +136,20 @@ def make_mappingJson():
 def main():
     make_mappingJson()
 
-    # asisSqlPath=r'C:\dev\workspace\tdcs-batch\tdcs-batch\asis\SALSUI08300_001.xsql'
-    asisSqlPath=r'C:\dev\workspace\tdcs-convert\tdcs\convert\sql\convert_files\TkpSwingWireRsalMapper.xml'
     date_format = get_date_format()
-    # #### by file 
-    # asisSqlPath = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch\java\com\sktps\batch\rmt\acc\db\RMTACC00200_TEMP.xsql'
+    # # #### by file 
+    # asisSqlPath=r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch\java\com\sktps\batch\bas\bi\db\BASBIB46.xsql'
     # convertByFile(asisSqlPath , None, date_format )
     
     
     ### by Folder
     # path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch\java\com\sktps\batch\rmt\acc\db'
     # 배치
-    path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch'
+    # path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch'
     # 재고
     # path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\dis'
     # 정산
-    # path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\acc'
+    path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\acc'
     print("Start By Foler")
     print("Folder : " + path_from)
     print("DateFormat" + date_format)
@@ -216,6 +218,7 @@ def convertByFile(asisSqlPath , tobePath , date_format ):
                     
                     parse = sqlparse.parse(sqlTobe)
                     sqlObj['parse'] = parse
+                    sqlObj['sqlOrigin'] = sql
                     if sqlList == 'procedure' : 
                         continue
                     if sqlId.startswith("call_") : 
@@ -285,12 +288,46 @@ def convertByInput(sql):
 
 def changeVariableTemplateDetail(match_obj):
     if match_obj.group(1) is not None:
+        # batch
         return "#{" + match_obj.group(1) + "}"
+        # batch 이외
+        # return "#{" + pydash.camel_case(match_obj.group(1)) + "}"
     
 def changeVariableTemplate( vTxt):
     newTxt = re.sub(r'#(?P<varName>[\w]+)#', changeVariableTemplateDetail , vTxt)
     return newTxt
-    # print(vTxt)
+
+
+
+def deleteEmptyLine( vTxt):
+    newTxt = re.sub(r'^[\s\t]*$\r\n', deleteEmptyLineDetail , vTxt)
+    return newTxt
+
+def deleteEmptyLineDetail(match_obj):
+    if match_obj.group() is not None:
+        return ""
+    
+def deleteCommentCj(vTxt):
+    newTxt = re.sub(r'\+cj', deleteCommentCjDetail , vTxt)
+    return newTxt
+
+def deleteCommentCjDetail(match_obj):
+    if match_obj.group() is not None:
+        return ""
+def deleteCommentAll(vTxt):
+    newTxt = re.sub(r'\/\*[\s\w가-힣\(\)\.:\<\>\-\*\[\]\{\}=,%\$]+\*\/', deleteCommentAllDetail , vTxt)
+    return newTxt
+
+def deleteCommentAllDetail(match_obj):
+    if match_obj.group() is not None:
+        return ""    
+def deleteCarageReturn(vTxt):
+    newTxt = re.sub(r'\r\n', deleteCarageReturnDetail , vTxt)
+    return newTxt
+
+def deleteCarageReturnDetail(match_obj):
+    if match_obj.group() is not None:
+        return "\n"
 
 def make_tobe_filepath(from_path, date_format):
     from_filename =  Path(from_path).stem
@@ -303,7 +340,25 @@ def make_tobe_filepath(from_path, date_format):
     else:
         to_filepath = os.path.join(dir_path , from_filename + '.xml')
     return to_filepath
-    
+
+def make_tobe_filepath_nocomment(from_path):
+    from_filename =  Path(from_path).stem
+    dir_path = os.path.dirname(from_path)
+    # now = datetime.datetime.now()
+    # formattedDate = now.strftime("%Y%m%d_%H%M%S")
+    to_filepath = ""
+    to_filepath = os.path.join(dir_path , from_filename + '_noComment.xml')
+    return to_filepath
+ 
+def make_tobe_filepath_before_sqllines(from_path):
+    from_filename =  Path(from_path).stem
+    dir_path = os.path.dirname(from_path)
+    # now = datetime.datetime.now()
+    # formattedDate = now.strftime("%Y%m%d_%H%M%S")
+    to_filepath = ""
+    to_filepath = os.path.join(dir_path , from_filename + '_before_sqllines.xml')
+    return to_filepath
+   
 def get_date_format():
     now = datetime.datetime.now()
     formattedDate = now.strftime("%Y%m%d_%H%M%S")
@@ -311,35 +366,147 @@ def get_date_format():
 
 def write_to_xml( tobe_xml_path, sqlMap , vNamespace ): 
     xmlFileTobe = []
+    # 번역만 한것.
+    xmlFileTobe_mapping = []
+    before_sqllines = []
     xmlFileTobe.append('<?xml version="1.0" encoding="UTF-8"?>\n')
+    xmlFileTobe_mapping.append('<?xml version="1.0" encoding="UTF-8"?>\n')
     vDoctype = '''<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">\n'''
     
     xmlFileTobe.append(vDoctype)
     xmlFileTobe.append('<mapper namespace="'+ vNamespace +'">\n')
+    xmlFileTobe_mapping.append(vDoctype)
+    xmlFileTobe_mapping.append('<mapper namespace="'+ vNamespace +'">\n')
     for sqlList in sqlMap:
         if type(sqlMap[sqlList]) == str :
             continue
         if pydash.includes(['select','insert','update','delete','procedure'], sqlList) :
             for sqlObj in pydash.concat([],sqlMap.get(sqlList)):
                 sqlId = (sqlObj['@id'])
-                # print(sqlId)
-                xmlFileTobe.append("\t<" + sqlList + " id=\""+sqlId + "\" parameterType=\"hashmap\" >\n")
-                xmlFileTobe.append("\t<![CDATA[\n")
-                xmlFileTobe.append("\t\t")
+                
+                
+                
+                # # origin 
                 # sql = sqlObj['#text']
-                # parse = sqlparse.parse(sql)
-                parse = sqlObj['parse']                    
-                convert_sql_recursive( xmlFileTobe, parse[0] )  
+                # sqlOrigin = sqlObj['sqlOrigin'] 
+                # xmlFileTobe.append("\t<" + sqlList + " id=\""+sqlId + "_asis\" parameterType=\"hashmap\" >\n")
+                # xmlFileTobe.append("\t<![CDATA[\n")
+                # xmlFileTobe.append("\t\t")
+                # xmlFileTobe.append(sqlOrigin)
+                # xmlFileTobe.append("\n\t]]>") 
+                # xmlFileTobe.append("\n\t</" + sqlList + ">\n")
+                # # end origin
+                
+                
+                parse = sqlObj['parse']     
+                before_sqllines = []   
+                convert_sql_recursive( before_sqllines, parse[0] )
+                
+                resultType = ""
+                if sqlList == 'select' :
+                    resultType = "resultType=\"hashmap\""
+                    
+                ## before sqllines
+                xmlFileTobe_mapping.append("\t<" + sqlList + " id=\""+sqlId + "\" parameterType=\"hashmap\"" + resultType + " >\n")
+                xmlFileTobe_mapping.append("\t<![CDATA[\n")
+                xmlFileTobe_mapping.append("\t\t")
+                xmlFileTobe_mapping = pydash.concat(xmlFileTobe_mapping , before_sqllines )
+                xmlFileTobe_mapping.append("\n\t]]>") 
+                xmlFileTobe_mapping.append("\n\t</" + sqlList + ">\n")
+                ## End before sqllines
+                
+                # # sqlLine online
+                # # online
+                # data = {'source': pydash.join(before_sqllines), 'source_type': 'Oracle', 'target_type': 'MySQL'} 
+                # headers = {'Content-Type': 'application/x-www-form-urlencoded; chearset=UTF-8'}
+                # res = requests.post('https://www.sqlines.com/sqlines_run.php', data=json.dumps(data), headers=headers)
+                # print(res.text)
+                #
+                # xmlFileTobe.append("\t<" + sqlList + " id=\""+sqlId + "\" parameterType=\"hashmap\" >\n")
+                # xmlFileTobe.append("\t<![CDATA[\n")
+                # xmlFileTobe.append("\t\t")
+                # parse = sqlObj['parse']     
+                # xmlFileTobe.append("\n\t]]>") 
+                # xmlFileTobe.append("res.text") 
+                # xmlFileTobe.append("\n\t</" + sqlList + ">\n")
+                # # End sqlLine
+                
+                # sqlLine Offline
+                tempFileName = 'tempSqlConvert.sql'
+                tempFileNameOut = 'tempSqlConvert_out.sql'
+                f1 = open( tempFileName , 'w',  encoding='UTF8') 
+                f1.write(pydash.join(before_sqllines))
+                f1.close()
+                f2 = open( tempFileNameOut , 'w',  encoding='UTF8') 
+                f2.close()
+                # text = subprocess.check_output('dir', shell = True)
+                # sql_command = "sqlines -s=oracle -t=mysql -in="+ tempFileName + " -out="+ tempFileNameOut 
+                # os.system(sql_command)
+                # sql_command = ["sqlines", "-s=oracle", "-t=mysql", "-in="+ tempFileName , "-out="+ tempFileNameOut]
+                # sql_command = [r"C:\tkeyTool\tools\sqlines-3.1.771\sqlines-3.1.771\sqlines", "-s=oracle", "-t=mysql", "-in="+ os.path.join(os.getcwd(),tempFileName) , "-out="+ os.path.join(os.getcwd(),tempFileNameOut)]
+                sql_command = [r"C:\tkeyTool\tools\sqlines-3.1.771\sqlines-3.1.771\sqlines", "-s=oracle", "-t=mysql", "-in="+ tempFileName , "-out="+ tempFileNameOut]
+                # cmd_respond = subprocess.check_output(sql_command , shell=True)
+                sqlAfterSqllines = ""
+                try:
+                    CREATE_NO_WINDOW = 0x08000000
+                    subprocess.call(sql_command , shell=True , creationflags=CREATE_NO_WINDOW)
+                    # cmd_respond = subprocess.check_output(sql_command , shell=True)
+                    # ft = open(tempFileNameOut ,'r',encoding='UTF8')
+                    ft = codecs.open(tempFileNameOut, 'r', encoding='utf-8',errors='ignore')
+                    sqlAfterSqllines = ft.read()
+                    ft.close()
+                except Exception as e:
+                    print('Error subprocess.call')
+                    print(str(e))
+                    pass
+                # process = subprocess.Popen(sql_command, shell=True , stdout=subprocess.PIPE , stderr=subprocess.PIPE )
+                
+                # with open(tempFileNameOut ,'r',encoding='UTF8') as f:
+                #     sqlAfterSqllines = f.read()
+                
+                sqlAfterSqllines = deleteEmptyLine(sqlAfterSqllines)
+                sqlAfterSqllines = deleteCommentCj(sqlAfterSqllines)
+                sqlAfterSqllines = deleteCarageReturn(sqlAfterSqllines)
+                
+                xmlFileTobe.append("\t<" + sqlList + " id=\""+sqlId + "\" parameterType=\"hashmap\" " + resultType + ">\n")
+                xmlFileTobe.append("\t<![CDATA[\n")
+                xmlFileTobe.append("\t\t" + sqlAfterSqllines)
                 xmlFileTobe.append("\n\t]]>") 
                 xmlFileTobe.append("\n\t</" + sqlList + ">\n")
+                
+                
+                
+                # os.remove(tempFileName, dir_fd=None)
+                # os.remove(tempFileNameOut, dir_fd=None)
+                
+                
     xmlFileTobe.append("</mapper>\n")
+    xmlFileTobe_mapping.append("</mapper>\n")
     
-    # write file 
+    # write file sqllines
     f = open( tobe_xml_path , 'w',  encoding='utf8')
     for vStr in xmlFileTobe:
         f.write(vStr )
     f.close()
-
+    
+    # write file only mapping before sqllines
+    tobe_xml_path_only_mapping = make_tobe_filepath_before_sqllines(tobe_xml_path)
+    f = open( tobe_xml_path_only_mapping , 'w',  encoding='utf8')
+    for vStr in xmlFileTobe_mapping:
+        f.write(vStr)
+    f.close()
+    
+    # write file no comment
+    f_nocomment = codecs.open(tobe_xml_path, 'r', encoding='utf-8',errors='ignore')
+    str_nocomment = f_nocomment.read()
+    f_nocomment.close()
+    str_nocomment = deleteCommentAll(str_nocomment)
+    str_nocomment = deleteCarageReturn(str_nocomment)
+    tobe_xml_path_nocomment = make_tobe_filepath_nocomment(tobe_xml_path)
+    f = open( tobe_xml_path_nocomment , 'w',  encoding='utf8')
+    f.write(str_nocomment)
+    f.close()
+    
 
 def convert_sql_recursive( xmlFileTobe , _token ) :
     if hasattr(_token, 'tokens') :
@@ -351,14 +518,14 @@ def convert_sql_recursive( xmlFileTobe , _token ) :
             m = _token.mapping_info
             if (_token.mappingType == 'column') :
                 if m['columnName'] != m['asisColumnName'] :
-                    xmlFileTobe.append( m['columnName'] + '\t/* ' + m['columnNameKor'] + ' changeFrom ' +  m['asisColumnName'] + ' */\t')
+                    xmlFileTobe.append( m['columnName'] + '\t/*+cj ' + m['columnNameKor'] + ' changeFrom ' +  m['asisColumnName'] + ' */\t')
                 else:
-                    xmlFileTobe.append( m['columnName'] + '\t/* ' + m['columnNameKor'] + ' */\t')
+                    xmlFileTobe.append( m['columnName'] + '\t/*+cj ' + m['columnNameKor'] + ' */\t')
             elif (_token.mappingType == 'table') :
                 if m['tableName'] != m['asisTableName'] :
-                    xmlFileTobe.append( m['tableName'] + '\t/* ' + m['tableNameKor'] + ' changeFrom ' +  m['asisTableName'] +' */\t')
+                    xmlFileTobe.append( m['tableName'] + '\t/*+cj ' + m['tableNameKor'] + ' changeFrom ' +  m['asisTableName'] +' */\t')
                 else:
-                    xmlFileTobe.append( m['tableName'] + '\t/* ' + m['tableNameKor'] + ' */\t')
+                    xmlFileTobe.append( m['tableName'] + '\t/*+cj ' + m['tableNameKor'] + ' */\t')
         else :
             xmlFileTobe.append(_token.value)
         
