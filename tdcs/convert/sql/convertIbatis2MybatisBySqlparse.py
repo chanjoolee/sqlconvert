@@ -129,7 +129,7 @@ def make_mappingJson():
     # mappingJson = make_columnMaping(excel_file_path, sheet_name)
     # json_file_path = 'mapping1.json'
     # json_file_path = 'table_mapping_202204211336.json' 
-    json_file_path = 'mapping_0422.json' 
+    json_file_path = 'mapping_0513.json' 
     read_columnMapping_file(json_file_path)
     mappingJson1 = pydash.group_by(mappingJson, ['asisTableName'])
 
@@ -138,18 +138,18 @@ def main():
 
     date_format = get_date_format()
     # # #### by file 
-    # asisSqlPath=r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch\java\com\sktps\batch\bas\bi\db\BASBIB46.xsql'
+    # asisSqlPath=r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch\java\com\sktps\batch\bas\bi\db\BASBIB06.xsql'
     # convertByFile(asisSqlPath , None, date_format )
     
     
     ### by Folder
     # path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch\java\com\sktps\batch\rmt\acc\db'
     # 배치
-    # path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch'
+    path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch'
     # 재고
     # path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\dis'
     # 정산
-    path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\acc'
+    # path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\acc'
     print("Start By Foler")
     print("Folder : " + path_from)
     print("DateFormat" + date_format)
@@ -228,6 +228,7 @@ def convertByFile(asisSqlPath , tobePath , date_format ):
                         if vToken.is_whitespace :
                             continue
                         if vToken._get_repr_name() == 'Comment':
+                            # vToken.value = setCommentCj(vToken.value)
                             continue
                         # table check
                         if is_pre_error(vToken) :
@@ -306,7 +307,14 @@ def deleteEmptyLine( vTxt):
 def deleteEmptyLineDetail(match_obj):
     if match_obj.group() is not None:
         return ""
-    
+def setCommentCj(vTxt):
+    newTxt = re.sub(r'\/\*', setCommentCjDetail , vTxt)
+    return newTxt
+
+def setCommentCjDetail(match_obj):
+    if match_obj.group() is not None:
+        return "/*+cj"
+        
 def deleteCommentCj(vTxt):
     newTxt = re.sub(r'\+cj', deleteCommentCjDetail , vTxt)
     return newTxt
@@ -356,7 +364,7 @@ def make_tobe_filepath_before_sqllines(from_path):
     # now = datetime.datetime.now()
     # formattedDate = now.strftime("%Y%m%d_%H%M%S")
     to_filepath = ""
-    to_filepath = os.path.join(dir_path , from_filename + '_before_sqllines.xml')
+    to_filepath = os.path.join(dir_path , from_filename + '_oracle.xml')
     return to_filepath
    
 def get_date_format():
@@ -527,7 +535,10 @@ def convert_sql_recursive( xmlFileTobe , _token ) :
                 else:
                     xmlFileTobe.append( m['tableName'] + '\t/*+cj ' + m['tableNameKor'] + ' */\t')
         else :
-            xmlFileTobe.append(_token.value)
+            if _token.ttype[0] == 'Comment':
+                xmlFileTobe.append(setCommentCj(_token.value))
+            else :
+                xmlFileTobe.append(_token.value)
         
 
 def processColumnToken(_token , sqlId , sqltype):
@@ -548,53 +559,64 @@ def processColumnToken(_token , sqlId , sqltype):
                     is_ibatis_var = True 
         if is_ibatis_var == False and hasattr(_token, 'value') and type(_token.value) == str and _token.value.startswith('#') :
             is_ibatis_var = True
-            
+         
+           
         if is_ibatis_var == False :
-            # 전체 statement에서 가져오면 범위가 너무 크다.
-            # v_statement = get_parent_statement(_token)
-            # v_table_tokens = extract_table_identifiers(v_statement)
-            
-            # 해당 쿼러기 있는 문장에서만 token들을 가져온다.
-            v_statement_tokens = get_parent_tokens(_token)
-            v_table_tokens = extract_table_identifiers(v_statement_tokens , sqlId , _token , sqltype)
-            
-            # v_table_token = get_table_name(_token)        
-            # v_table_name = v_table_token.get_name()
-            for table_token in v_table_tokens:
-                 # get_name 은 alias 임
-                v_table_name = table_token.get_real_name()
-                v_table_alias = table_token.get_name()
-                v_column_name = _token.value
-                v_find_map = None
-                v_find_table = None
-                parent_token = _token.parent                
-                if (isinstance(parent_token , sqlparse.sql.Identifier ) 
-                    and len(parent_token.tokens) == 3 
-                    and parent_token.tokens[1].value == '.'  
-                ): 
-                    v_col_tab_alias = parent_token.tokens[0].value
-                    if v_col_tab_alias.strip().upper() ==  v_table_alias.strip().upper() :
+            is_alias = False
+            if isinstance(_token.parent, sqlparse.sql.Identifier) and isinstance(_token.parent.parent, sqlparse.sql.Identifier) :
+                # if ( _token.parent.parent.get_real_name() != _token.parent.parent.get_alias() 
+                #     and _token.parent.get_alias() is None 
+                #     and _token.parent.get_name() == _token.parent.parent.get_alias() 
+                #     ):
+                #     is_alias = True
+                if ( _token.parent.get_name() == _token.parent.parent.get_alias()) :
+                    is_alias = True
+            if is_alias == False :
+                # 전체 statement에서 가져오면 범위가 너무 크다.
+                # v_statement = get_parent_statement(_token)
+                # v_table_tokens = extract_table_identifiers(v_statement)
+                
+                # 해당 쿼러기 있는 문장에서만 token들을 가져온다.
+                v_statement_tokens = get_parent_tokens(_token)
+                v_table_tokens = extract_table_identifiers(v_statement_tokens , sqlId , _token , sqltype)
+                
+                # v_table_token = get_table_name(_token)        
+                # v_table_name = v_table_token.get_name()
+                for table_token in v_table_tokens:
+                     # get_name 은 alias 임
+                    v_table_name = table_token.get_real_name()
+                    v_table_alias = table_token.get_name()
+                    v_column_name = _token.value
+                    v_find_map = None
+                    v_find_table = None
+                    parent_token = _token.parent                
+                    if (isinstance(parent_token , sqlparse.sql.Identifier ) 
+                        and len(parent_token.tokens) == 3 
+                        and parent_token.tokens[1].value == '.'  
+                    ): 
+                        v_col_tab_alias = parent_token.tokens[0].value
+                        if v_col_tab_alias.strip().upper() ==  v_table_alias.strip().upper() :
+                            # v_find_map = pydash.find(mappingJson, {'asisTableName' : v_table_name.strip().upper() , 'asisColumnName': v_column_name.strip().upper() })
+                            v_find_table = mappingJson1.get(v_table_name.strip().upper())
+                            if ( v_find_table is not None) :
+                                v_find_map = pydash.find(v_find_table, { 'asisColumnName': v_column_name.strip().upper() })
+                        
+                    else :
                         # v_find_map = pydash.find(mappingJson, {'asisTableName' : v_table_name.strip().upper() , 'asisColumnName': v_column_name.strip().upper() })
                         v_find_table = mappingJson1.get(v_table_name.strip().upper())
                         if ( v_find_table is not None) :
                             v_find_map = pydash.find(v_find_table, { 'asisColumnName': v_column_name.strip().upper() })
+                            
                     
-                else :
-                    # v_find_map = pydash.find(mappingJson, {'asisTableName' : v_table_name.strip().upper() , 'asisColumnName': v_column_name.strip().upper() })
-                    v_find_table = mappingJson1.get(v_table_name.strip().upper())
-                    if ( v_find_table is not None) :
-                        v_find_map = pydash.find(v_find_table, { 'asisColumnName': v_column_name.strip().upper() })
+                    if v_find_map is not None:
+                        _token.mapping_info = v_find_map
+                        _token.mappingType = 'column'
+                        # if v_find_map['asisColumnName'] != v_column_name.strip().upper() :
+                        #     _token.mapping_info = v_find_map
+                        #     _token.mapping_info['mappingType'] = 'column'
                         
-                
-                if v_find_map is not None:
-                    _token.mapping_info = v_find_map
-                    _token.mappingType = 'column'
-                    # if v_find_map['asisColumnName'] != v_column_name.strip().upper() :
-                    #     _token.mapping_info = v_find_map
-                    #     _token.mapping_info['mappingType'] = 'column'
-                    
-                    # if v_find_table is not None :
-                    set_table_mapping(table_token, v_find_table[0])
+                        # if v_find_table is not None :
+                        set_table_mapping(table_token, v_find_table[0])
                 
     # 다시 돌린다.
     if hasattr(_token, 'tokens') :
@@ -602,6 +624,7 @@ def processColumnToken(_token , sqlId , sqltype):
             if token.is_whitespace :
                 continue
             if isinstance(token, sqlparse.sql.Comment):
+                # token.value = setCommentCj(token.value)
                 continue
             
             # # '#{xxx}' 로 감싸인 것을 처리하기 위함 mybatis
