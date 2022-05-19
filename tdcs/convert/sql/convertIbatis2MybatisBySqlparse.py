@@ -134,6 +134,7 @@ def make_mappingJson():
     mappingJson1 = pydash.group_by(mappingJson, ['asisTableName'])
 
 def main():
+    global mode
     make_mappingJson()
 
     date_format = get_date_format()
@@ -145,11 +146,14 @@ def main():
     ### by Folder
     # path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch\java\com\sktps\batch\rmt\acc\db'
     # 배치
-    path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch'
+    # path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch'
+    # mode = 'batch'
     # 재고
-    # path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\dis'
+    path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\dis'
+    mode = 'dis'
     # 정산
     # path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\acc'
+    # mode = 'acc'
     print("Start By Foler")
     print("Folder : " + path_from)
     print("DateFormat" + date_format)
@@ -288,11 +292,14 @@ def convertByInput(sql):
     
 
 def changeVariableTemplateDetail(match_obj):
+    global mode
     if match_obj.group(1) is not None:
         # batch
-        return "#{" + match_obj.group(1) + "}"
+        if mode == 'batch':
+            return "#{" + match_obj.group(1) + "}"
+        else :
         # batch 이외
-        # return "#{" + pydash.camel_case(match_obj.group(1)) + "}"
+            return "#{" + pydash.camel_case(match_obj.group(1)) + "}"
     
 def changeVariableTemplate( vTxt):
     newTxt = re.sub(r'#(?P<varName>[\w]+)#', changeVariableTemplateDetail , vTxt)
