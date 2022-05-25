@@ -129,7 +129,7 @@ def make_mappingJson():
     # mappingJson = make_columnMaping(excel_file_path, sheet_name)
     # json_file_path = 'mapping1.json'
     # json_file_path = 'table_mapping_202204211336.json' 
-    json_file_path = 'mapping_0513.json' 
+    json_file_path = 'mapping_0520.json' 
     read_columnMapping_file(json_file_path)
     mappingJson1 = pydash.group_by(mappingJson, ['asisTableName'])
 
@@ -139,21 +139,21 @@ def main():
 
     date_format = get_date_format()
     # # #### by file 
-    # asisSqlPath=r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch\java\com\sktps\batch\bas\bi\db\BASBIB06.xsql'
+    # # asisSqlPath=r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch\java\com\sktps\batch\bas\bi\db\BASBIB06.xsql'
+    # asisSqlPath=r'C:\dev\workspace\tdcs-batch-sql\sqlconvert\batch\VBAS_ORG_01_work.xml'
     # convertByFile(asisSqlPath , None, date_format )
     
     
     ### by Folder
-    # path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch\java\com\sktps\batch\rmt\acc\db'
     # 배치
-    # path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch'
+    # path_from = r'C:\dev\workapace\tdcs-batch-sql\sqlconvert\batch'
     # mode = 'batch'
     # 재고
-    path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\dis'
-    mode = 'dis'
+    # path_from = r'C:\dev\workspace\tdcs-batch-sql\sqlconvert\dis'
+    # mode = 'dis'
     # 정산
-    # path_from = r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\acc'
-    # mode = 'acc'
+    path_from = r'C:\dev\workspace\tdcs-batch-sql\sqlconvert\acc'
+    mode = 'acc'
     print("Start By Foler")
     print("Folder : " + path_from)
     print("DateFormat" + date_format)
