@@ -140,26 +140,30 @@ def main():
     date_format = get_date_format()
     # # #### by file 
     # # asisSqlPath=r'C:\dev\workapace_sql\tdcs-batch\sqlconvert\batch\java\com\sktps\batch\bas\bi\db\BASBIB06.xsql'
-    # asisSqlPath=r'C:\dev\workspace\tdcs-batch-sql\sqlconvert\batch\VBAS_ORG_01_work.xml'
+    # asisSqlPath=r'C:\dev\workspace\tdcs-batch-sql\sqlconvert\batch\java\com\sktps\batch\vrf\sui\db\VRFSUI08700.xsql'
     # convertByFile(asisSqlPath , None, date_format )
     
     
     ### by Folder
     # 배치
-    # path_from = r'C:\dev\workapace\tdcs-batch-sql\sqlconvert\batch'
-    # mode = 'batch'
+    path_from = r'C:\dev\workspace\tdcs-batch-sql\sqlconvert\batch'
+    mode = 'batch'
     # 재고
     # path_from = r'C:\dev\workspace\tdcs-batch-sql\sqlconvert\dis'
     # mode = 'dis'
     # 정산
-    path_from = r'C:\dev\workspace\tdcs-batch-sql\sqlconvert\acc'
-    mode = 'acc'
+    # path_from = r'C:\dev\workspace\tdcs-batch-sql\sqlconvert\acc'
+    # mode = 'acc'
     print("Start By Foler")
     print("Folder : " + path_from)
     print("DateFormat" + date_format)
-    convertByFolder(path_from, date_format)
+    # convertByFolder(path_from, date_format)
+    # report 
+    report_info = {'asisTableName':'TBAS_DEAL_CO_MGMT', 'asisColumnName': 'ORG_ID2' }
+    convertByFolder(path_from, date_format, report_info)
+    
 
-def convertByFolder(path_from , date_format):
+def convertByFolder(path_from , date_format , report_info=None):
     file_list = []
     file_pattern = "*.xsql"
     for path, subdirs, files in os.walk(path_from):
@@ -171,7 +175,15 @@ def convertByFolder(path_from , date_format):
                     , "file_name" : name
                 })
     
-    
+    if report_info is not None:
+        report_info['report_file_path'] = path_from +  '_report_column_' +  '_' + report_info['asisTableName'] +'_' + report_info['asisColumnName'] + '_' + date_format + '.yml'
+        report_info['report_file_count'] = 0
+        report_info['report_used_count'] = 0
+        f = open( report_info['report_file_path'] , 'w',  encoding='utf8')
+        f.write('asisTableName:\t' + report_info['asisTableName'] + '\n' )
+        f.write('asisColumnName:\t' + report_info['asisColumnName'] + '\n' )
+        f.close()
+        
     for idx,path_info in enumerate(file_list):
         print('file process' + str(idx+1) + '/' +   str(len(file_list)))
         print("<<<< " + path_info['full_path'] + ">>>>>")
@@ -179,9 +191,16 @@ def convertByFolder(path_from , date_format):
         sub_path = file_path[len(path_from):]
         file_name = path_info['file_name']
         path_to = path_from +  '_' +  date_format + sub_path 
-        make_dir_recursive(path_to)
-        convertByFile(path_info['full_path'], os.path.join(path_to, file_name) , None )
-         
+        if report_info is None :
+            make_dir_recursive(path_to)
+        convertByFile(path_info['full_path'], os.path.join(path_to, file_name) , None , report_info )
+    
+    if report_info is not None:
+        f = open( report_info['report_file_path'] , 'a',  encoding='utf8')
+        f.write('Total ' + str(report_info['report_file_count'] ) + ' File Used\n')
+        f.write('Total ' + str(report_info['report_used_count'] ) + ' Count Used')
+        f.close()
+       
     print("\n")      
     print("Convert convertByFolder Complete!")
 
@@ -197,7 +216,7 @@ def make_dir_recursive( full_path ):
         if not os.path.exists(cur_path) :
             os.mkdir(cur_path)
         
-def convertByFile(asisSqlPath , tobePath , date_format ):
+def convertByFile(asisSqlPath , tobePath , date_format , report_info=None  ):
     try: 
         asisSqlJson = make_asisSqlToJson(asisSqlPath)
         
@@ -250,7 +269,25 @@ def convertByFile(asisSqlPath , tobePath , date_format ):
         vNamespace = sqlMap.get("@namespace")
         
         # print("\t\t<<<<<   write_to_xml >>>>>>\n")
-        write_to_xml( tobe_xml_path , sqlMap , vNamespace )           
+        if report_info is not None:
+            reportInfos = reportForColumnChangeByFile(sqlMap , vNamespace , report_info['asisTableName'] , report_info['asisColumnName'])
+            if len(reportInfos) > 0 :
+                report_info['report_file_count'] = report_info['report_file_count'] + 1
+                f = open( report_info['report_file_path'] , 'a',  encoding='utf8')
+                f.write('\t' + vNamespace + '\n' )
+                for info in reportInfos:
+                    report_info['report_used_count'] = report_info['report_used_count'] + len(info['report_infos'])
+                    f.write('\t\t' + info['sqlId'] + ': ' + str(len(info['report_infos'])) + ' Used' + '\n' )
+                    # for map_info in info['report_infos'] : 
+                    #     f.write('\t\t\tasisTableName:\t' + map_info['mapping_info']['asisTableName'] + '\n' )
+                    #     f.write('\t\t\tasisColumnName:\t' + map_info['mapping_info']['asisColumnName'] + '\n' )
+                    #     f.write('\t\t\ttableName:\t' + map_info['mapping_info']['tableName'] + '\n' )
+                    #     f.write('\t\t\ttableNameKor:\t' + map_info['mapping_info']['tableNameKor'] + '\n' )
+                    #     f.write('\t\t\t\t' + map_info['sql'] + '\n' )
+                f.write('\n' )
+                f.close()
+        else:
+            write_to_xml( tobe_xml_path , sqlMap , vNamespace )           
         print("\t\tComplete")
     
     except Exception as e:
@@ -521,8 +558,30 @@ def write_to_xml( tobe_xml_path, sqlMap , vNamespace ):
     f = open( tobe_xml_path_nocomment , 'w',  encoding='utf8')
     f.write(str_nocomment)
     f.close()
-    
+  
 
+  
+def reportForColumnChangeByFile(sqlMap , vNamespace , tableName , columnName):
+    # ddddd
+    reportInfos = []
+    for sqlList in sqlMap:
+        if type(sqlMap[sqlList]) == str :
+            continue
+        if pydash.includes(['select','insert','update','delete','procedure'], sqlList) :
+            for sqlObj in pydash.concat([],sqlMap.get(sqlList)):
+                sqlId = (sqlObj['@id'])
+                parse = sqlObj['parse']     
+                findInfos = []   
+                find_asis_column(findInfos , tableName , columnName , parse[0]  )
+                if ( len(findInfos) > 0 ) :
+                    reportInfos.append({
+                        'namespace' : vNamespace ,
+                        'sqlId' : sqlId ,
+                        'report_infos' : findInfos
+                    })
+                    # reportInfos = pydash.concat(reportInfos,findInfos)
+    return reportInfos
+    
 def convert_sql_recursive( xmlFileTobe , _token ) :
     if hasattr(_token, 'tokens') :
         for token in _token.tokens:                        
@@ -547,6 +606,22 @@ def convert_sql_recursive( xmlFileTobe , _token ) :
             else :
                 xmlFileTobe.append(_token.value)
         
+
+def find_asis_column( findInfos  ,  tableName , columnName, _token ) :
+    if hasattr(_token, 'tokens') :
+        for token in _token.tokens:                        
+            find_asis_column( findInfos , tableName , columnName, token)
+    
+    else :
+        if ( _token.mapping_info is not None ) :
+            m = _token.mapping_info
+            if (_token.mappingType == 'column') :
+                if ( m['asisTableName'] == tableName.upper() and m['asisColumnName'] == columnName.upper()   ) :
+                    sql = ''
+                    if hasattr(_token , 'parent') :
+                        sql = _token.parent.value
+                    findInfos.append( {'mapping_info': _token.mapping_info , 'sql': sql } )
+       
 
 def processColumnToken(_token , sqlId , sqltype):
     # 일단 본업무를 처리하고
