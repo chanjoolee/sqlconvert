@@ -25,10 +25,10 @@ root_tobe_java_package = "com.skt.tdcs.batch"
 
 # 엑셀에서 작업할 파일을 정의한다.v
 excel_file_path = r'C:\dev\workspace\tdcs-batch-sql\javaconvert\java_mapping.xlsx'
-sheet_name = '2022.06.23'
-v_author = '이찬주 (P179230)'
-# sheet_name = '2022.06.28(혀눅)'
-# v_author = '유현욱 (P178634)'
+# sheet_name = '2022.06.23'
+# v_author = '이찬주 (P179230)'
+sheet_name = '2022.06.28(혀눅)'
+v_author = '유현욱 (P178634)'
 ex = {
     'asis_file_nm' : '',
     'tobe_file_nm' : '',
@@ -253,7 +253,7 @@ import lombok.extern.slf4j.Slf4j;
             if match_sursqlmap is not None:
                 str_tobe = '''
         sqlSession{sqlmap_surname} = ConnectionFactory.getSqlSessionFactory(\"{con_xmlname}\").openSession(false);
-        mapper{sqlmap_surname} = sqlSessionB2B.getMapper({tobe_file_nm}Mapper.class);
+        mapper{sqlmap_surname} = sqlSession{sqlmap_surname}.getMapper({tobe_file_nm}Mapper.class);
                 \n'''.format(sqlmap_surname=sqlMapSurName , con_xmlname=map_xml[con_xmlname],tobe_file_nm=mapping_info["tobe_file_nm"] )
                 file_new.append(str_tobe)
             # if is_b2b == True :
