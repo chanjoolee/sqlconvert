@@ -129,7 +129,8 @@ def make_mappingJson():
     # mappingJson = make_columnMaping(excel_file_path, sheet_name)
     # json_file_path = 'mapping1.json'
     # json_file_path = 'table_mapping_202204211336.json' 
-    json_file_path = 'mapping_0520.json' 
+    # json_file_path = 'mapping_0520.json'
+    json_file_path = 'mapping_0715.json'  
     read_columnMapping_file(json_file_path)
     mappingJson1 = pydash.group_by(mappingJson, ['asisTableName'])
 
@@ -159,7 +160,8 @@ def main():
     print("DateFormat" + date_format)
     # convertByFolder(path_from, date_format)
     # report 
-    report_info = {'asisTableName':'TBAS_DEAL_CO_MGMT', 'asisColumnName': 'ORG_ID2' }
+    # report_info = {'asisTableName':'TBAS_DEAL_CO_MGMT', 'asisColumnName': 'ORG_ID2' }
+    report_info = None
     convertByFolder(path_from, date_format, report_info)
     
 

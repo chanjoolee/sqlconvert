@@ -13,10 +13,11 @@ import codecs
 
 # asis java file list
 java_path_asis = r'C:\dev\workspace\tdcs-batch-sql\javaconvert\batch\asis\com'
-java_file_list = []
+java_file_list = [] 
 java_file_list1 = {} # 인덱스
 
-root_xml_path=r"C:\dev\workspace\tdcs-batch-sql\sqlconvert\batch_20220523"
+# root_xml_path=r"C:\dev\workspace\tdcs-batch-sql\sqlconvert\batch_20220523"
+root_xml_path=r"C:\dev\workspace\tdcs-batch-sql\sqlconvert\batch_20220801"
 xml_file_list = []
 xml_file_list1 = {}
 
@@ -27,7 +28,9 @@ root_tobe_java_package = "com.skt.tdcs.batch"
 excel_file_path = r'C:\dev\workspace\tdcs-batch-sql\javaconvert\java_mapping.xlsx'
 # sheet_name = '2022.06.23'
 # v_author = '이찬주 (P179230)'
-sheet_name = '2022.06.28(혀눅)'
+# sheet_name = '2022.07.11(혀눅)'
+# v_author = '유현욱 (P178634)'
+sheet_name = '2022.8.1(혀눅)'
 v_author = '유현욱 (P178634)'
 ex = {
     'asis_file_nm' : '',
@@ -56,7 +59,7 @@ pt_sqlmapper = re.compile(r"(?P<type>\([\w]+\)\s?)?sqlMap(?P<sqlMapEx>[\w]+)?\.[
 pt_file =  re.compile(r"(?P<space>^\s+)(?P<full>([\w]+)\s?=\s?new\s?FileReader\(\s?([\w]+)\s?\);)", re.IGNORECASE)
 pt_buffer = re.compile(r"(?P<space>^\s+)(?P<full>([\w]+)\s?=\s?new\s?BufferedReader\(\s?([\w]+)\s?\);)", re.IGNORECASE)
 
-pt_getbyte = re.compile(r"=\s?(?P<target>getSubstrByte)")
+pt_getbyte = re.compile(r"=([\s]+)?(?P<target>getSubstrByte)")
 # 엑셀에서 작업할 파일을 정의한다.v
 def make_mappingJson():
     global mappingJson
