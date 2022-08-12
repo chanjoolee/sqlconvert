@@ -364,7 +364,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
                     'mapping_info' : mapping_info ,
                     'match_info' : match_sqlmapper
                 }
-                list_rest_api.append(rest_api_info)
+                find_rest = pydash.find(list_rest_api, {'sqlId' : match_sqlmapper.groupdict()['sqlId']} )
+                if find_rest is None:
+                    list_rest_api.append(rest_api_info)
                 str_tobe = change_sqlmapper_middle(line1 , mapping_info , match_sqlmapper, rest_api_info )
                 
             else :
@@ -674,7 +676,7 @@ public class {file_nm}Controller extends CommonRestController {{
         file_new.append('''
     /**
      *
-     * insertShopInfo
+     * {sqlId}
      *
      * @author : {author}
      * @date    : 2022. 7. 29.
@@ -1088,13 +1090,14 @@ def change_sqlmapper_middle(vTxt, mapping_info, match_info , rest_api_info):
         return_type = 'Integer'
         return_var_nm = 'count_' + match_info.groupdict()['sqlId']
         
-    newTxt_4 = str_indent + '{return_type} {return_var_nm} = ({return_type}){api_return_var_nm}.get("result_target");\n'.format(
+    newTxt_4 = str_indent + '{return_type} {return_var_nm} = ({return_type})((Map){api_return_var_nm}.get("result")).get("result_target");\n'.format(
         return_type = return_type
         ,return_var_nm = return_var_nm
         ,api_return_var_nm = api_return_var_nm
         )
     
     # service 에서 써먹는다.
+    rest_api_info['sqlId'] = match_info.groupdict()['sqlId']
     rest_api_info['return_info'] = {
         'return_type' : return_type 
         ,'return_var_nm' : return_var_nm 
