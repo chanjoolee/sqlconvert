@@ -33,14 +33,14 @@ root_rest_path = r"C:\dev\workspace\tdcs-batch-sql\javaconvert\batch\restapi"
 
 # 엑셀에서 작업할 파일을 정의한다.v
 excel_file_path = r'C:\dev\workspace\tdcs-batch-sql\javaconvert\java_mapping.xlsx'
-sheet_name = '2022.06.23'
-v_author = '이찬주 (P179230)'
+# sheet_name = '2022.06.23'
+# v_author = '이찬주 (P179230)'
 # sheet_name = '2022.07.11(혀눅)'
 # v_author = '유현욱 (P178634)'
 # sheet_name = '2022.8.1(혀눅)'
 # v_author = '유현욱 (P178634)'
-# sheet_name = '혀눅ALL'
-# v_author = '유현욱 (P178634)'
+sheet_name = '혀눅ALL'
+v_author = '유현욱 (P178634)'
 ex = {
     'asis_file_nm' : '',
     'tobe_file_nm' : '',
@@ -818,11 +818,16 @@ public class {file_nm}Service {{
     @Transactional
     public Map<String,Object> {sqlId}(Map<String,Object> paramVo, HttpServletRequest request) throws Exception {{
         
-        {return_type} {return_var_nm} = ({return_type})mapper{mapperEx}.{sqlId}(paramVo);
-        
         Map<String, Object> resultMap = new HashMap<String, Object>();
-        resultMap.put("result_target", {return_var_nm});
         
+        try{{
+            {return_type} {return_var_nm} = ({return_type})mapper{mapperEx}.{sqlId}(paramVo);
+            resultMap.put("result","S");
+            resultMap.put("result_target", {return_var_nm});
+        }} catch (Exception e){{
+            resultMap.put("result","E");
+            resultMap.put("message", e.getMessage());
+        }}
         return resultMap;
     }}
 
@@ -1089,7 +1094,17 @@ def change_sqlmapper_middle(vTxt, mapping_info, match_info , rest_api_info):
     else :
         return_type = 'Integer'
         return_var_nm = 'count_' + match_info.groupdict()['sqlId']
-        
+    
+    # 에러가 나면 로그를 찍어준다.
+    newTxt_3_1 = str_indent + 'if( !((Map){api_return_var_nm}.get("result")).get("result").toString().equals("S") ) {{\n'.format(
+        api_return_var_nm = api_return_var_nm
+        )
+    newTxt_3_2 = str_indent + '\tthrow new Exception(((Map){api_return_var_nm}.get("result")).get("message").toString());\n'.format(
+        api_return_var_nm = api_return_var_nm
+        )
+
+    newTxt_3_3 = str_indent + '}\n'
+    
     newTxt_4 = str_indent + '{return_type} {return_var_nm} = ({return_type})((Map){api_return_var_nm}.get("result")).get("result_target");\n'.format(
         return_type = return_type
         ,return_var_nm = return_var_nm
@@ -1106,7 +1121,7 @@ def change_sqlmapper_middle(vTxt, mapping_info, match_info , rest_api_info):
     }
     
     # m = re.search(r"(?P<type>\([\w]+\)\s?)?sqlMap(?P<sqlMapEx>[\w]+)?\.[\w]+\(\"(?P<namespace>[\w]+)\.(?P<sqlId>[\w]+)\"(\s*)?,?(\s*)?(?P<parameter>[\w\"]+)?\)", vTxt , re.IGNORECASE) 
-    newTxt = newTxt_1 + newTxt_2 + newTxt_3 + newTxt_4
+    newTxt = newTxt_1 + newTxt_2 + newTxt_3 + newTxt_3_1 + newTxt_3_2 + newTxt_3_3 + newTxt_4
         
     # newTxt = re.sub(r"(?P<type>\([\w]+\)\s?)?sqlMap(?P<sqlMapEx>[\w]+)?\.[\w]+\(\"(?P<namespace>[\w]+)\.(?P<sqlId>[\w]+)\"(\s*)?,?(\s*)?(?P<parameter>[\w\"]+)?\)", 
     #                 lambda x : change_sqlmapper__middle_detail(x , mapping_info) ,
